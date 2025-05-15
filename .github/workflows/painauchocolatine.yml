@@ -1,6 +1,6 @@
 env:
   MIRROR_URL: 'git@github.com:EpitechPromo2028/something.git'
-  EXECUTABLES: 'executable'
+  EXECUTABLES: 'plazza'
 
 name: Painauchocolatine
 on:
