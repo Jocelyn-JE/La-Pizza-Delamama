@@ -21,7 +21,7 @@ OBJ					=	$(SRC:.cpp=.o)
 MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
 
 # Tests sources ---------------------------------------------------------------
-TESTS_SRC			=
+SRC_TESTS			=
 
 # Flags -----------------------------------------------------------------------
 INCLUDES			=
@@ -57,7 +57,7 @@ vg: $(BINARY_NAME) $(CLIENT_BINARY_NAME)
 	cat $(VALGRIND_LOG)
 
 tests_run:
-	g++ -o unit_tests $(SRC) $(TESTS_SRC) $(CPPTESTFLAGS)
+	g++ -o unit_tests $(SRC) $(SRC_TESTS) $(CPPTESTFLAGS)
 	./unit_tests
 	gcovr --exclude tests/
 	gcovr -e tests --branch
