@@ -1,0 +1,142 @@
+env:
+  MIRROR_URL: 'git@github.com:EpitechPromo2028/something.git'
+  EXECUTABLES: 'executable'
+
+name: Painauchocolatine
+on:
+  push:
+    branches-ignore:
+      - 'ga-ignore-*'
+    paths:
+      - '**'
+  pull_request:
+    branches-ignore:
+      - 'ga-ignore-*'
+    paths:
+      - '**'
+
+jobs:
+  check_mirror_repo:
+    name: "Check mirror repository"
+    runs-on: ubuntu-latest
+    outputs:
+        check_repo: ${{ steps.check_repo.outputs.repo }}
+    steps:
+      - id: check_repo
+        run: |
+          cleaned_url=$(echo "$MIRROR_URL" | sed 's/git@github.com://' | sed 's/.git$//')
+          if [[ "${{ github.repository }}" == $cleaned_url ]]; then
+            echo "repo=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "repo=false" >> "$GITHUB_OUTPUT"
+
+  check_coding_style:
+    name: "Check coding style"
+    needs: check_mirror_repo
+    if: needs.check_mirror_repo.outputs.check_repo != 'true'
+    runs-on: ubuntu-latest
+    container: ghcr.io/epitech/coding-style-checker:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+    - name: Run coding style checker
+      run: |
+        check.sh "$(pwd)" "$(pwd)"
+        tmpfile=$(mktemp)
+        
+        echo "0" > "$tmpfile"
+        cat coding-style-reports.log | while read -r line; do
+          file=$(echo "$line" | cut -d':' -f1 | cut -d'/' -f 2-)
+          nbline=$(echo "$line" | cut -d':' -f2)
+          title=$(echo "$line" | cut -d':' -f3)" coding style error"
+          code=$(echo "$line" | cut -d':' -f4)
+          echo "::error title=$title,file=$file,line=$nbline,col=0::$code"
+          echo "1" > "$tmpfile"
+        done
+          
+        if [ "$(cat "$tmpfile")" = "1" ]; then
+          rm "$tmpfile"
+          exit 1
+        fi
+        rm "$tmpfile"
+
+  check_cpp_linter:
+    name: "Check C++ linter"
+    needs: check_mirror_repo
+    runs-on: ubuntu-latest
+    container: python:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: Install cpplint
+        run: apt-get update && apt-get install -y python3-pip && pip install --upgrade pip && pip3 install cpplint==2.0
+      - name: Install Make
+        run: apt-get update && apt-get install -y make
+      - name: Run C++ linter
+        run: make linter
+
+  check_program_compilation:
+    name: "Check program compilation"
+    needs:
+      - check_coding_style
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+    - name: Build project
+      timeout-minutes: 2
+      run: make -j
+    - name: Clean temporary files
+      run: make clean
+    - name: Check executables
+      shell: bash
+      run: |
+        exit_code=0
+      
+        IFS=', ' read -r -a array <<< "$EXECUTABLES"
+      
+        for element in "${array[@]}"
+        do
+            if [[ ! -f "$element" ]]; then
+                echo ::error title=$element does not exist::The file $element does not exist.
+                exit_code=1
+            fi
+            if [[ ! -x "$element" ]]; then
+                echo ::error title=$element is not executable::The file $element cant be executed.
+                exit_code=1
+            fi
+        done
+      
+        exit $exit_code
+
+  run_tests:
+    name: "Running tests"
+    needs: 
+      - check_program_compilation
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+    - name: Run tests
+      timeout-minutes: 2
+      run: make tests_run -j
+
+  push_to_mirror:
+    name: "Push to mirror repository"
+    needs:
+      - run_tests
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+      with:
+        fetch-depth: 0
+    - name: Mirror to target repository
+      uses: pixta-dev/repository-mirroring-action@v1.1.1
+      with:
+        target_repo_url:  ${{ env.MIRROR_URL }}
+        ssh_private_key:  ${{ secrets.GIT_SSH_PRIVATE_KEY }}

@@ -1,0 +1,83 @@
+##
+## EPITECH PROJECT, 2024
+## Makefile
+## File description:
+## Makefile
+##
+
+.PHONY: all clean fclean re tests_run vg cs linter format
+
+%.o: %.cpp
+	g++ $(CPPFLAGS) -c $< -o $@
+
+BINARY_NAME			=	plazza
+
+MAIN_SRC			=	./src/Main.cpp
+
+SRC					=
+
+OBJ					=	$(SRC:.cpp=.o)
+
+MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
+
+# Tests sources ---------------------------------------------------------------
+TESTS_SRC			=
+
+# Flags -----------------------------------------------------------------------
+INCLUDES			=
+
+CPPFLAGS			+=	-std=c++20 -Wall -Wextra -Werror $(INCLUDES) 		\
+
+CPPTESTFLAGS		=	--coverage -lcriterion $(CPPFLAGS)
+
+VALGRIND_FLAGS		=														\
+	--leak-check=full														\
+	--show-leak-kinds=definite												\
+	--track-origins=yes														\
+	--errors-for-leak-kinds=definite										\
+	--log-file="$(VALGRIND_LOG)"											\
+
+CPPLINT_FLAGS		=														\
+	--root=./include														\
+	--repository=. 															\
+	--filter=-legal/copyright,-build/c++17,+build/c++20,-runtime/references,$\
+-build/include_subdir,-build/c++11											\
+	--recursive																\
+
+VALGRIND_LOG		=	valgrind.log
+
+# Rules -----------------------------------------------------------------------
+all: $(BINARY_NAME)
+
+$(BINARY_NAME):	$(OBJ) $(MAIN_OBJ)
+	g++ -o $(BINARY_NAME) $(OBJ) $(MAIN_OBJ) $(CPPFLAGS)
+
+vg: $(BINARY_NAME) $(CLIENT_BINARY_NAME)
+	valgrind $(VALGRIND_FLAGS) ./$(BINARY_NAME)
+	cat $(VALGRIND_LOG)
+
+tests_run:
+	g++ -o unit_tests $(SRC) $(TESTS_SRC) $(CPPTESTFLAGS)
+	./unit_tests
+	gcovr --exclude tests/
+	gcovr -e tests --branch
+
+clean:
+	rm -f $(OBJ) $(MAIN_OBJ) *.gcda *.gcno vgcore.* *.log
+
+fclean: clean
+	rm -f $(BINARY_NAME) unit_tests
+
+re: fclean all
+
+cs:	clean
+	coding-style . .
+	cat coding-style-reports.log
+	rm -f coding-style-reports.log
+
+linter: clean
+	cpplint $(CPPLINT_FLAGS) ./src/
+
+format: clean
+	find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.tpp" \) ! \
+	-path "./tests/*" -exec clang-format -i {} +
