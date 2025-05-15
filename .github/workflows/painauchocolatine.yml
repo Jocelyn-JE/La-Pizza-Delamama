@@ -78,8 +78,7 @@ jobs:
 
   check_program_compilation:
     name: "Check program compilation"
-    needs:
-      - check_coding_style
+    needs: check_mirror_repo
     runs-on: ubuntu-latest
     container: epitechcontent/epitest-docker:latest
     steps:
@@ -128,6 +127,8 @@ jobs:
     name: "Push to mirror repository"
     needs:
       - run_tests
+      - check_cpp_linter
+      - check_coding_style
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
