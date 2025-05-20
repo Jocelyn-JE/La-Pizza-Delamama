@@ -5,7 +5,12 @@
 ** Main
 */
 
+#include "CLI.hpp"
+
 int main(int ac, char **av) {
+    plazza::CLI shell;
+
+    shell.runInterface();
     (void)ac;
     (void)av;
     return 0;
