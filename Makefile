@@ -14,7 +14,8 @@ BINARY_NAME			=	plazza
 
 MAIN_SRC			=	./src/Main.cpp
 
-SRC					=	./src/CLI.cpp	\
+SRC					=	./src/CLI.cpp							\
+						./src/plazza/reception/Reception.cpp	\
 
 OBJ					=	$(SRC:.cpp=.o)
 

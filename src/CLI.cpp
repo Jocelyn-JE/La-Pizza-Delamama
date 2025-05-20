@@ -10,9 +10,9 @@
 #include <iostream>
 #include <string>
 
-plazza::CLI::CLI() {}
-
-plazza::CLI::~CLI() {}
+plazza::CLI::CLI(
+    double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
+    : _reception(cookingMultiplier, cookNb, restockTime) {}
 
 void plazza::CLI::runInterface() {
     while (true) {
@@ -31,8 +31,7 @@ void plazza::CLI::handleInput(const std::string &input) {
         handleExit();
     } else if (input == _helpCommand) {
         handleHelp();
-    } else {
-        // Won't be unknown command but this is where we'll handle pizza orders
+    } else if (_reception.processOrder(input) == false) {
         std::cout << "Unknown command: " << input << std::endl;
     }
 }
