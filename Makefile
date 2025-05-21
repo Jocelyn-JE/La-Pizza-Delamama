@@ -8,13 +8,14 @@
 .PHONY: all clean fclean re tests_run vg cs linter format
 
 %.o: %.cpp
-	g++ $(CPPFLAGS) -c $< -o $@
+	g++ -c $< -o $@ $(CPPFLAGS)
 
 BINARY_NAME			=	plazza
 
 MAIN_SRC			=	./src/Main.cpp
 
 SRC					=	./src/CLI.cpp							\
+						./src/Utils.cpp							\
 						./src/plazza/reception/Reception.cpp	\
 
 OBJ					=	$(SRC:.cpp=.o)
@@ -25,7 +26,7 @@ MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
 SRC_TESTS			=
 
 # Flags -----------------------------------------------------------------------
-INCLUDES			=
+INCLUDES			=	-I./include/ -I./src/
 
 CPPFLAGS			+=	-std=c++20 -Wall -Wextra -Werror $(INCLUDES) 		\
 

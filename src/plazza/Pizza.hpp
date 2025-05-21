@@ -7,8 +7,15 @@
 
 #ifndef SRC_PLAZZA_PIZZA_HPP_
 #define SRC_PLAZZA_PIZZA_HPP_
+#include <string>
+#include <unordered_set>
 
 namespace plazza {
+static const std::unordered_set<std::string> validPizzaTypes = {
+    "regina", "margarita", "americana", "fantasia"};
+static const std::unordered_set<std::string> validPizzaSizes = {
+    "S", "M", "L", "XL", "XXL"};
+
 class Pizza {
  public:
     enum PizzaType {

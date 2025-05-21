@@ -10,6 +10,8 @@
 #include <iostream>
 #include <string>
 
+#include "Utils.hpp"
+
 plazza::CLI::CLI(
     double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
     : _reception(cookingMultiplier, cookNb, restockTime) {}
@@ -31,8 +33,8 @@ void plazza::CLI::handleInput(const std::string &input) {
         handleExit();
     } else if (input == _helpCommand) {
         handleHelp();
-    } else if (_reception.processOrder(input) == false) {
-        std::cout << "Unknown command: " << input << std::endl;
+    } else if (_reception.processOrder(utils::toLower(input)) == false) {
+        std::cout << "Invalid order: " << input << std::endl;
     }
 }
 

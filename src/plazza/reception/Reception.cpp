@@ -9,7 +9,11 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
 #include <vector>
+
+#include "Utils.hpp"
+#include "plazza/Pizza.hpp"
 
 plazza::Reception::Reception(
     double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
@@ -17,45 +21,51 @@ plazza::Reception::Reception(
       _cookNb(cookNb),
       _restockTime(restockTime) {}
 
-static std::vector<std::string> split(
-    const std::string &str, const std::string &delimiter) {
-    std::vector<std::string> tokens;
-    size_t start = 0, end = 0;
-
-    end = str.find(delimiter, start);
-    while (end != std::string::npos) {
-        tokens.push_back(str.substr(start, end - start));
-        start = end + delimiter.length();
-        end = str.find(delimiter, start);
-    }
-    if (start < str.length())
-        tokens.push_back(str.substr(start));
-    return tokens;
-}
-
 bool plazza::Reception::processOrder(const std::string &order) {
-    std::vector<std::string> pizzaOrders = split(order, "; ");
+    std::vector<std::string> pizzaOrders = utils::split(order, "; ");
 
     for (auto pizza : pizzaOrders) {
-        // std::cout << "Pizza order:" << pizza << std::endl;
-        if (!validatePizza(pizza)) {
-            std::cout << "Invalid pizza order: " << pizza << std::endl;
+        if (pizza.empty()) {
+            std::cout << "Empty pizza order" << std::endl;
             return false;
         }
+        if (!validatePizza(pizza))
+            return false;
     }
     return true;
 }
 
 bool plazza::Reception::validatePizza(const std::string &pizza) {
-    std::string validPizzas[] = {"regina", "margarita", "americana",
-        "fantasia"};  // Probably gonna be replaced by a global constant
-    std::vector<std::string> tokenizedPizza = split(pizza, " ");
+    std::vector<std::string> tokenizedPizza = utils::split(pizza, " ");
 
-    // for (auto token : tokenizedPizza) {
-    //     std::cout << token << std::endl;
-    // }
     if (tokenizedPizza.size() != 3) {
-        std::cout << "Missing info: " << pizza << std::endl;
+        std::cout << (tokenizedPizza.size() < 3 ? "Too few" : "Too many")
+                  << " values: " << pizza << std::endl;
+        std::cout << "Expected format: <type> <size> <count>" << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaType(tokenizedPizza[0])) {
+        std::cout << "Invalid pizza type: " << tokenizedPizza[0] << std::endl;
+        std::cout << "Valid types are: ";
+        for (const auto &type : plazza::validPizzaTypes)
+            std::cout << type << " ";
+        std::cout << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaSize(tokenizedPizza[1])) {
+        std::cout << "Invalid pizza size: " << tokenizedPizza[1] << std::endl;
+        std::cout << "Valid sizes are: ";
+        for (const auto &size : plazza::validPizzaSizes)
+            std::cout << size << " ";
+        std::cout << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaCount(tokenizedPizza[2])) {
+        std::cout << "Invalid pizza count: " << tokenizedPizza[2] << std::endl;
+        std::cout
+            << "Count should be in the format 'xN' where N is a positive "
+               "integer"
+            << std::endl;
         return false;
     }
     return true;
