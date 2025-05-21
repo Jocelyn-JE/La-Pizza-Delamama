@@ -42,8 +42,8 @@ VALGRIND_FLAGS		=														\
 CPPLINT_FLAGS		=														\
 	--root=./include														\
 	--repository=. 															\
-	--filter=-legal/copyright,-build/c++17,+build/c++20,-runtime/references,$\
--build/include_subdir,-build/c++11											\
+	--filter=-build/include_subdir,-runtime/references,-build/c++17,-build/$\
+c++11,-legal/copyright,-whitespace/indent_namespace							\
 	--recursive																\
 
 VALGRIND_LOG		=	valgrind.log
