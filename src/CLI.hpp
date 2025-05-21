@@ -40,7 +40,9 @@ class CLI {
         "Available commands:\n"
         "\t- exit: Exit the program\n"
         "\t- help: Show this help message\n"
-        "\t- status: Show the status of the kitchen\n";
+        "\t- status: Show the status of the kitchen\n"
+        "\t- <type> <size> <number>[; <type> <size> <number>]: Place an "
+        "order\n";
     void printPrompt();
     void handleInput(const std::string &input);
     void handleExit();

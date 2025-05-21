@@ -35,6 +35,7 @@ void plazza::CLI::handleInput(const std::string &input) {
         handleHelp();
     } else if (_reception.processOrder(utils::toLower(input)) == false) {
         std::cout << "Invalid order: " << input << std::endl;
+        std::cout << "Type 'help' for more information." << std::endl;
     }
 }
 
