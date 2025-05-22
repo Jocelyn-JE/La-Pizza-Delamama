@@ -7,6 +7,7 @@
 
 #include "Utils.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -54,4 +55,12 @@ std::string utils::toUpper(const std::string &str) {
     for (char &c : upperStr)
         c = std::toupper(c);
     return upperStr;
+}
+
+bool utils::isNumber(const std::string &str) {
+    for (char c : str) {
+        if (!std::isdigit(c))
+            return false;
+    }
+    return true;
 }

@@ -6,12 +6,14 @@
 */
 
 #include "CLI.hpp"
+#include "Parser.hpp"
 
 int main(int ac, char **av) {
-    plazza::CLI shell(1.0, 4, 5);
-
+    Parser parser(ac, av);
+    if (!parser.parse())
+        return 84;
+    plazza::CLI shell(parser.getCookingMultiplier(), parser.getCookNb(),
+        parser.getRestockTime());
     shell.runInterface();
-    (void)ac;
-    (void)av;
     return 0;
 }

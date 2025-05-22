@@ -16,6 +16,7 @@ MAIN_SRC			=	./src/Main.cpp
 
 SRC					=	./src/CLI.cpp							\
 						./src/Utils.cpp							\
+						./src/Parser.cpp						\
 						./src/plazza/reception/Reception.cpp	\
 
 OBJ					=	$(SRC:.cpp=.o)
