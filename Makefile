@@ -8,13 +8,15 @@
 .PHONY: all clean fclean re tests_run vg cs linter format
 
 %.o: %.cpp
-	g++ $(CPPFLAGS) -c $< -o $@
+	g++ -c $< -o $@ $(CPPFLAGS)
 
 BINARY_NAME			=	plazza
 
 MAIN_SRC			=	./src/Main.cpp
 
-SRC					=
+SRC					=	./src/CLI.cpp							\
+						./src/Utils.cpp							\
+						./src/plazza/reception/Reception.cpp	\
 
 OBJ					=	$(SRC:.cpp=.o)
 
@@ -24,7 +26,7 @@ MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
 SRC_TESTS			=
 
 # Flags -----------------------------------------------------------------------
-INCLUDES			=
+INCLUDES			=	-I./include/ -I./src/
 
 CPPFLAGS			+=	-std=c++20 -Wall -Wextra -Werror $(INCLUDES) 		\
 
@@ -40,8 +42,8 @@ VALGRIND_FLAGS		=														\
 CPPLINT_FLAGS		=														\
 	--root=./include														\
 	--repository=. 															\
-	--filter=-legal/copyright,-build/c++17,+build/c++20,-runtime/references,$\
--build/include_subdir,-build/c++11											\
+	--filter=-build/include_subdir,-runtime/references,-build/c++17,-build/$\
+c++11,-legal/copyright,-whitespace/indent_namespace							\
 	--recursive																\
 
 VALGRIND_LOG		=	valgrind.log
