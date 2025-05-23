@@ -30,6 +30,9 @@ std::string toLower(const std::string &str);
 // Function to get the uppercase version of a string
 std::string toUpper(const std::string &str);
 
+// Function to check if a string is a positive whole number
+bool isNumber(const std::string &str);
+
 }  // namespace utils
 
 #endif  // SRC_UTILS_HPP_
