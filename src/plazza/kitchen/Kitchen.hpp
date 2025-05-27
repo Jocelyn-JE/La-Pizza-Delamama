@@ -5,8 +5,8 @@
 ** Kitchen
 */
 
-#ifndef KITCHEN_HPP_
-#define KITCHEN_HPP_
+#ifndef SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
+#define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 
 #include <ctime>
 #include <string>
@@ -19,7 +19,6 @@ namespace plazza {
 
 class Ingredients {
  public:
-
     Ingredients() = default;
     ~Ingredients() = default;
 
@@ -70,4 +69,4 @@ class Kitchen {
 };
 }  // namespace plazza
 
-#endif /* !KITCHEN_HPP_ */
+#endif  // SRC_PLAZZA_KITCHEN_KITCHEN_HPP_

@@ -8,6 +8,7 @@
 #include "Kitchen.hpp"
 
 #include <iostream>
+#include <string>
 
 namespace plazza {
 Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
@@ -44,14 +45,16 @@ void Kitchen::cook() {
         std::clock_t currentTime = std::clock();
         this->_timePassed = currentTime;
 
-        if (std::difftime(std::time(nullptr), this->_lastRestockTime) >= this->_restockTime/1000.0f) {
+        if (std::difftime(std::time(nullptr), this->_lastRestockTime) >=
+            this->_restockTime / 1000.0f) {
             this->_lastRestockTime = std::time(nullptr);
             this->_ingredients.restock();
             std::cout << "Restocking ingredients in kitchen: "
                       << this->_kitchenName << std::endl;
         }
         if (std::difftime(std::time(nullptr), this->_lastCookTime) >= 5) {
-            std::cout << "Closing kitchen: " << this->_kitchenName << std::endl;
+            std::cout << "Closing kitchen: " << this->_kitchenName
+                      << std::endl;
             break;
         }
         // if status received, print status
@@ -60,4 +63,4 @@ void Kitchen::cook() {
         // thread pool
     }
 }
-}
+}  // namespace plazza
