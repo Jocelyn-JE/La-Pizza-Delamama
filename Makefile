@@ -8,7 +8,7 @@
 .PHONY: all clean fclean re tests_run vg cs linter format
 
 %.o: %.cpp
-	g++ -c $< -o $@ $(CPPFLAGS)
+	- g++ -c $< -o $@ $(CPPFLAGS)
 
 BINARY_NAME			=	plazza
 
@@ -17,6 +17,10 @@ MAIN_SRC			=	./src/Main.cpp
 SRC					=	./src/CLI.cpp							\
 						./src/Utils.cpp							\
 						./src/Parser.cpp						\
+						./src/NamedPipe.cpp						\
+						./src/ThreadPool.cpp					\
+						./src/plazza/kitchen/Kitchen.cpp		\
+						./src/plazza/Pizza.cpp					\
 						./src/plazza/reception/Reception.cpp	\
 
 OBJ					=	$(SRC:.cpp=.o)
@@ -29,7 +33,7 @@ SRC_TESTS			=
 # Flags -----------------------------------------------------------------------
 INCLUDES			=	-I./include/ -I./src/
 
-CPPFLAGS			+=	-std=c++20 -Wall -Wextra -Werror $(INCLUDES) 		\
+CPPFLAGS			+=	-std=c++17 -Wall -Wextra -Werror $(INCLUDES) 		\
 
 CPPTESTFLAGS		=	--coverage -lcriterion $(CPPFLAGS)
 
@@ -53,7 +57,7 @@ VALGRIND_LOG		=	valgrind.log
 all: $(BINARY_NAME)
 
 $(BINARY_NAME):	$(OBJ) $(MAIN_OBJ)
-	g++ -o $(BINARY_NAME) $(OBJ) $(MAIN_OBJ) $(CPPFLAGS)
+	- g++ -o $(BINARY_NAME) $(OBJ) $(MAIN_OBJ) $(CPPFLAGS)
 
 vg: $(BINARY_NAME) $(CLIENT_BINARY_NAME)
 	valgrind $(VALGRIND_FLAGS) ./$(BINARY_NAME)

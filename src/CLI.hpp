@@ -36,17 +36,19 @@ class CLI {
     std::string _prompt = "plazza> ";
     std::string _exitCommand = "exit";
     std::string _helpCommand = "help";
+    std::string _statusCommand = "status";
     std::string _helpMessage =
         "Available commands:\n"
         "\t- exit: Exit the program\n"
         "\t- help: Show this help message\n"
-        "\t- status: Show the status of the kitchen\n"
+        "\t- status: Show the status of the kitchens\n"
         "\t- <type> <size> <number>[; <type> <size> <number>]: Place an "
         "order\n";
     void printPrompt();
     void handleInput(const std::string &input);
     void handleExit();
     void handleHelp();
+    void handleStatus();
 };
 };  // namespace plazza
 

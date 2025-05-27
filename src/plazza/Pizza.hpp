@@ -8,6 +8,7 @@
 #ifndef SRC_PLAZZA_PIZZA_HPP_
 #define SRC_PLAZZA_PIZZA_HPP_
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace plazza {
@@ -33,14 +34,25 @@ class Pizza {
         XXL = 16
     };
 
-    Pizza() = delete;
+    Pizza() = default;
     Pizza(PizzaType type, PizzaSize size);
     ~Pizza() = default;
 
+    PizzaType getType() const {
+        return _type;
+    }
+
+    PizzaSize getSize() const {
+        return _size;
+    }
+
+    std::string toString() const;
+
  private:
-    const PizzaType _type;
-    const PizzaSize _size;
+    PizzaType _type;
+    PizzaSize _size;
 };
+
 }  // namespace plazza
 
 #endif  // SRC_PLAZZA_PIZZA_HPP_

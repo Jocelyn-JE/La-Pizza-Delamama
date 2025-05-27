@@ -1,0 +1,1609 @@
+.clang-format:
+```
+BasedOnStyle: Google
+AccessModifierOffset: -3
+AlignAfterOpenBracket: DontAlign
+AlignEscapedNewlines: Left
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowAllArgumentsOnNextLine: true
+ColumnLimit: 79
+DerivePointerAlignment: false
+InsertNewlineAtEOF: true
+IndentWidth: 4
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '<.*\.h>'
+    Priority: 0
+  - Regex: '<.*\.(hpp|h\+\+)>'
+    Priority: 2
+  - Regex: '<.*>'
+    Priority: 1
+  - Regex: '".*\.hpp"'
+    Priority: 3
+PointerAlignment: Right
+ReferenceAlignment: Right
+ReflowComments: true
+SeparateDefinitionBlocks: Always
+SpacesInParentheses: false
+SpaceBeforeCaseColon: false
+SpaceBeforeJsonColon: false
+SpaceBeforeSquareBrackets: false
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+UseTab: Never
+```
+
+Utils.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Utils
+*/
+
+#ifndef SRC_UTILS_HPP_
+#define SRC_UTILS_HPP_
+#include <string>
+#include <vector>
+
+namespace utils {
+// Function to split a string by a delimiter
+std::vector<std::string> split(
+    const std::string &str, const std::string &delimiter);
+
+// Function to validate pizza type
+bool isValidPizzaType(const std::string &type);
+
+// Function to validate pizza size
+bool isValidPizzaSize(const std::string &size);
+
+// Function to validate pizza count
+bool isValidPizzaCount(const std::string &count);
+
+// Function to get the lowercase version of a string
+std::string toLower(const std::string &str);
+
+// Function to get the uppercase version of a string
+std::string toUpper(const std::string &str);
+
+// Function to check if a string is a positive whole number
+bool isNumber(const std::string &str);
+
+}  // namespace utils
+
+#endif  // SRC_UTILS_HPP_
+```
+
+Parser.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Parser
+*/
+
+#ifndef SRC_PARSER_HPP_
+#define SRC_PARSER_HPP_
+#include <string>
+#include <vector>
+
+class Parser {
+ public:
+    Parser() = delete;
+    Parser(int argc, char **argv);
+    ~Parser() = default;
+    bool parse();
+    double getCookingMultiplier() const;
+    unsigned int getCookNb() const;
+    unsigned int getRestockTime() const;
+
+ private:
+    bool printUsage() const;
+    double tryConvertDouble(const std::string &arg);
+    unsigned int tryConvertUnsignedInt(const std::string &arg);
+
+    int _argc;
+    std::vector<std::string> _argv;
+    double _cookingMultiplier;
+    unsigned int _cookNb;
+    unsigned int _restockTime;
+
+    class ParserException : public std::exception {
+     public:
+        explicit ParserException(const std::string &errmsg);
+        const char *what() const noexcept override;
+
+     private:
+        std::string _errmsg = "No error message specified";
+    };
+};
+
+#endif  // SRC_PARSER_HPP_
+```
+
+Utils.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Utils
+*/
+
+#include "Utils.hpp"
+
+#include <string>
+#include <vector>
+
+#include "plazza/Pizza.hpp"
+
+bool utils::isValidPizzaType(const std::string &type) {
+    return plazza::validPizzaTypes.count(type) > 0;
+}
+
+bool utils::isValidPizzaSize(const std::string &size) {
+    return plazza::validPizzaSizes.count(utils::toUpper(size)) > 0;
+}
+
+bool utils::isValidPizzaCount(const std::string &count) {
+    if (count.size() < 2 || count[0] != 'x' || count[1] == '0')
+        return false;
+    for (size_t i = 1; i < count.size(); ++i)
+        if (!std::isdigit(count[i]))
+            return false;
+    return true;
+}
+
+std::vector<std::string> utils::split(
+    const std::string &str, const std::string &delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0, end = 0;
+
+    while ((end = str.find(delimiter, start)) != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + delimiter.length();
+    }
+    tokens.push_back(str.substr(start));
+    return tokens;
+}
+
+std::string utils::toLower(const std::string &str) {
+    std::string lowerStr = str;
+    for (char &c : lowerStr)
+        c = std::tolower(c);
+    return lowerStr;
+}
+
+std::string utils::toUpper(const std::string &str) {
+    std::string upperStr = str;
+    for (char &c : upperStr)
+        c = std::toupper(c);
+    return upperStr;
+}
+
+bool utils::isNumber(const std::string &str) {
+    for (char c : str) {
+        if (!std::isdigit(c))
+            return false;
+    }
+    return true;
+}
+```
+
+NamedPipe.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** NamedPipe.cpp
+** File description:
+** _
+*/
+
+#include "NamedPipe.hpp"
+
+#include <iostream>
+#include <stdexcept>
+
+namespace plazza {
+namespace ipc {
+
+NamedPipe::NamedPipe(const std::string &name, Mode mode)
+    : _name(name), _fd(-1), _mode(mode), _isOpen(false) {
+    std::cout << "Creating named pipe: " << _name << std::endl;
+    if (mkfifo(_name.c_str(), 0666) == -1 && errno != EEXIST) {
+        throw std::runtime_error("Failed to create named pipe: " + _name);
+    }
+
+    std::cout << "Named pipe created successfully: " << _name << std::endl;
+
+    int flags = (_mode == READ) ? O_RDONLY : O_WRONLY;
+    _fd = ::open(_name.c_str(), flags);
+
+    std::cout << "Opening named pipe: " << _name << std::endl;
+    if (_fd == -1) {
+        throw std::runtime_error("Failed to open named pipe: " + _name);
+    }
+
+    _isOpen = true;
+}
+
+NamedPipe::~NamedPipe() {
+    close();
+    if (_mode == WRITE) {
+        unlink(_name.c_str());
+    }
+}
+
+void NamedPipe::close() {
+    if (_isOpen) {
+        ::close(_fd);
+        _isOpen = false;
+    }
+}
+
+}  // namespace ipc
+}  // namespace plazza
+```
+
+Main.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Main
+*/
+
+#include "CLI.hpp"
+#include "Parser.hpp"
+
+int main(int ac, char **av) {
+    Parser parser(ac, av);
+    if (!parser.parse())
+        return 84;
+    plazza::CLI shell(parser.getCookingMultiplier(), parser.getCookNb(),
+        parser.getRestockTime());
+    shell.runInterface();
+    return 0;
+}
+```
+
+NamedPipe.hpp:
+```
+#ifndef SRC_PLAZZA_IPC_NAMEDPIPE_HPP_
+#define SRC_PLAZZA_IPC_NAMEDPIPE_HPP_
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <string>
+
+namespace plazza {
+namespace ipc {
+
+class NamedPipe {
+ public:
+    enum Mode {
+        READ,
+        WRITE
+    };
+
+    NamedPipe() = delete;
+    NamedPipe(const std::string &name, Mode mode);
+    ~NamedPipe();
+
+    template <typename T>
+    bool write(const T &data);
+
+    template <typename T>
+    bool read(T &data);
+
+    template <typename T>
+    NamedPipe &operator<<(const T &data);
+
+    template <typename T>
+    NamedPipe &operator>>(T &data);
+
+    void close();
+
+    bool isOpen() const {
+        return _isOpen;
+    }
+
+ private:
+    std::string _name;
+    int _fd;
+    Mode _mode;
+    bool _isOpen;
+};
+
+template <typename T>
+bool NamedPipe::write(const T &data) {
+    if (_mode != WRITE || !_isOpen) {
+        return false;
+    }
+    return ::write(_fd, &data, sizeof(T)) == sizeof(T);
+}
+
+template <typename T>
+bool NamedPipe::read(T &data) {
+    if (_mode != READ || !_isOpen) {
+        return false;
+    }
+    return ::read(_fd, &data, sizeof(T)) == sizeof(T);
+}
+
+template <typename T>
+NamedPipe &NamedPipe::operator<<(const T &data) {
+    write(data);
+    return *this;
+}
+
+template <typename T>
+NamedPipe &NamedPipe::operator>>(T &data) {
+    read(data);
+    return *this;
+}
+
+}  // namespace ipc
+}  // namespace plazza
+
+#endif  // SRC_PLAZZA_IPC_NAMEDPIPE_HPP_
+```
+
+ThreadPool.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** ThreadPool.cpp
+** File description:
+** _
+*/
+
+#include "ThreadPool.hpp"
+
+namespace plazza {
+namespace kitchen {
+
+ThreadPool::ThreadPool(size_t numThreads) : _stop(false), _busyCount(0) {
+    for (size_t i = 0; i < numThreads; ++i) {
+        _workers.emplace_back([this] {
+            while (true) {
+                std::function<void()> task;
+
+                {
+                    std::unique_lock<std::mutex> lock(this->_queueMutex);
+
+                    this->_condition.wait(lock, [this] {
+                        return this->_stop || !this->_tasks.empty();
+                    });
+
+                    if (this->_stop && this->_tasks.empty()) {
+                        return;
+                    }
+
+                    task = std::move(this->_tasks.front());
+                    this->_tasks.pop();
+                }
+
+                task();
+            }
+        });
+    }
+}
+
+ThreadPool::~ThreadPool() {
+    {
+        std::unique_lock<std::mutex> lock(_queueMutex);
+        _stop = true;
+    }
+
+    _condition.notify_all();
+
+    for (std::thread &worker : _workers) {
+        worker.join();
+    }
+}
+
+size_t ThreadPool::getBusyCount() const {
+    return _busyCount;
+}
+
+size_t ThreadPool::getThreadCount() const {
+    return _workers.size();
+}
+
+}  // namespace kitchen
+}  // namespace plazza
+```
+
+CLI.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** CLI
+*/
+
+#ifndef SRC_CLI_HPP_
+#define SRC_CLI_HPP_
+#include <string>
+
+#include "plazza/reception/Reception.hpp"
+
+namespace plazza {
+class CLI {
+ public:
+    CLI() = delete;
+    CLI(double cookingMultiplier, unsigned int cookNb,
+        unsigned int restockTime);
+    ~CLI() = default;
+    void runInterface();
+    std::string getLastInput() const;
+
+    class CLIException : public std::exception {
+     public:
+        explicit CLIException(const std::string &errmsg);
+        const char *what() const noexcept override;
+
+     private:
+        std::string _errmsg = "No error message specified";
+    };
+
+ private:
+    plazza::Reception _reception;
+    std::string _lastInput = "";
+    std::string _prompt = "plazza> ";
+    std::string _exitCommand = "exit";
+    std::string _helpCommand = "help";
+    std::string _statusCommand = "status";
+    std::string _helpMessage =
+        "Available commands:\n"
+        "\t- exit: Exit the program\n"
+        "\t- help: Show this help message\n"
+        "\t- status: Show the status of the kitchens\n"
+        "\t- <type> <size> <number>[; <type> <size> <number>]: Place an "
+        "order\n";
+    void printPrompt();
+    void handleInput(const std::string &input);
+    void handleExit();
+    void handleHelp();
+    void handleStatus();
+};
+};  // namespace plazza
+
+#endif  // SRC_CLI_HPP_
+```
+
+Parser.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Parser
+*/
+
+#include "Parser.hpp"
+
+#include <iostream>
+#include <string>
+
+#include "Utils.hpp"
+
+Parser::Parser(int argc, char **argv)
+    : _argc(argc), _cookingMultiplier(0), _cookNb(0), _restockTime(0) {
+    for (int i = 0; i < argc; ++i)
+        _argv.push_back(argv[i]);
+}
+
+double Parser::getCookingMultiplier() const {
+    return _cookingMultiplier;
+}
+
+unsigned int Parser::getCookNb() const {
+    return _cookNb;
+}
+
+unsigned int Parser::getRestockTime() const {
+    return _restockTime;
+}
+
+double Parser::tryConvertDouble(const std::string &arg) {
+    try {
+        return std::stod(arg);
+    } catch (const std::invalid_argument &e) {
+        throw Parser::ParserException("Invalid argument: " + arg);
+    } catch (const std::out_of_range &e) {
+        throw Parser::ParserException("Out of range: " + arg);
+    }
+}
+
+unsigned int Parser::tryConvertUnsignedInt(const std::string &arg) {
+    try {
+        if (utils::isNumber(arg) == false)
+            throw std::invalid_argument("nan");
+        return std::stoul(arg);
+    } catch (const std::invalid_argument &e) {
+        throw Parser::ParserException("Invalid argument: " + arg);
+    } catch (const std::out_of_range &e) {
+        throw Parser::ParserException("Out of range: " + arg);
+    }
+}
+
+bool Parser::parse() {
+    if (_argc != 4) {
+        std::cout << "Invalid number of arguments" << std::endl;
+        return printUsage();
+    }
+    try {
+        _cookingMultiplier = tryConvertDouble(_argv[1]);
+        _cookNb = tryConvertUnsignedInt(_argv[2]);
+        _restockTime = tryConvertUnsignedInt(_argv[3]);
+    } catch (const Parser::ParserException &e) {
+        std::cerr << e.what() << std::endl;
+        return printUsage();
+    }
+    if (_cookingMultiplier < 0) {
+        std::cout << "Invalid cooking multiplier: " << _argv[1] << std::endl;
+        return printUsage();
+    }
+    if (_cookNb <= 0) {
+        std::cout << "Invalid number of cooks: " << _argv[2] << std::endl;
+        return printUsage();
+    }
+    return true;
+}
+
+bool Parser::printUsage() const {
+    std::cout << "Usage: " << _argv[0]
+              << " <cookingMultiplier> <cookNb> <restockTime>" << std::endl
+              << "\tcookingMultiplier: Cooking time multiplier (double >= 0)"
+              << std::endl
+              << "\tcookNb: Number of cooks (unsigned int > 0)" << std::endl
+              << "\trestockTime (in ms): Restock time (unsigned int >= 0)"
+              << std::endl;
+    return false;
+}
+
+// ParserException
+
+Parser::ParserException::ParserException(const std::string &errmsg)
+    : _errmsg(errmsg) {}
+
+const char *Parser::ParserException::what() const noexcept {
+    return _errmsg.c_str();
+}
+```
+
+ThreadPool.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** ThreadPool.hpp
+** File description:
+** _
+*/
+
+#ifndef SRC_PLAZZA_KITCHEN_THREADPOOL_HPP_
+#define SRC_PLAZZA_KITCHEN_THREADPOOL_HPP_
+
+#include <atomic>
+#include <condition_variable>
+#include <functional>
+#include <future>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <vector>
+
+namespace plazza {
+namespace kitchen {
+
+class ThreadPool {
+ public:
+    ThreadPool(size_t numThreads);
+    ~ThreadPool();
+
+    template <class F, class... Args>
+    auto enqueue(F &&f, Args &&...args)
+        -> std::future<typename std::result_of<F(Args...)>::type>;
+
+    size_t getBusyCount() const;
+
+    size_t getThreadCount() const;
+
+ private:
+    std::vector<std::thread> _workers;
+
+    std::queue<std::function<void()>> _tasks;
+
+    mutable std::mutex _queueMutex;
+    std::condition_variable _condition;
+
+    std::atomic<bool> _stop;
+    std::atomic<size_t> _busyCount;
+};
+
+template <class F, class... Args>
+auto ThreadPool::enqueue(F &&f, Args &&...args)
+    -> std::future<typename std::result_of<F(Args...)>::type> {
+    using return_type = typename std::result_of<F(Args...)>::type;
+
+    auto task = std::make_shared<std::packaged_task<return_type()>>(
+        std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+
+    std::future<return_type> res = task->get_future();
+
+    {
+        std::unique_lock<std::mutex> lock(_queueMutex);
+
+        if (_stop) {
+            throw std::runtime_error("enqueue on stopped ThreadPool");
+        }
+
+        _tasks.emplace([task, this]() {
+            _busyCount++;
+            (*task)();
+            _busyCount--;
+        });
+    }
+
+    _condition.notify_one();
+    return res;
+}
+
+}  // namespace kitchen
+}  // namespace plazza
+
+#endif  // SRC_PLAZZA_KITCHEN_THREADPOOL_HPP_
+```
+
+Reception.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Reception
+*/
+
+#ifndef SRC_PLAZZA_RECEPTION_RECEPTION_HPP_
+#define SRC_PLAZZA_RECEPTION_RECEPTION_HPP_
+
+#include <atomic>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+
+#include "../../NamedPipe.hpp"
+#include "../Pizza.hpp"
+#include "../kitchen/Kitchen.hpp"
+
+namespace plazza {
+
+class Reception {
+ public:
+    Reception() = delete;
+    Reception(double cookingMultiplier, unsigned int cookNb,
+        unsigned int restockTime);
+    ~Reception();
+
+    bool processOrder(const std::string &order);
+
+    void displayStatus() const;
+
+ protected:
+ private:
+    double _cookingMultiplier;
+    unsigned int _cookNb;
+    unsigned int _restockTime;
+    unsigned int _nextKitchenId;
+    mutable std::mutex _kitchensMutex;
+    std::vector<pid_t> _kitchenPids;
+    std::unordered_map<unsigned int,
+        std::pair<ipc::NamedPipe *, ipc::NamedPipe *>>
+        _kitchenPipes;
+    std::atomic<bool> _running;
+    std::thread _resultCollectorThread;
+
+    bool validatePizza(const std::string &pizza);
+    void createKitchen();
+    void dispatchPizza(const Pizza &pizza);
+    unsigned int findAvailableKitchen();
+    void collectResults();
+    Pizza createPizza(const std::string &type, const std::string &size,
+        const std::string &count);
+};
+
+}  // namespace plazza
+
+#endif  // SRC_PLAZZA_RECEPTION_RECEPTION_HPP_
+```
+
+Reception.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Reception
+*/
+
+#include "Reception.hpp"
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <iostream>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include "../../Utils.hpp"
+
+plazza::Reception::Reception(
+    double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
+    : _cookingMultiplier(cookingMultiplier),
+      _cookNb(cookNb),
+      _restockTime(restockTime),
+      _nextKitchenId(0),
+      _running(true) {
+    _resultCollectorThread = std::thread(&Reception::collectResults, this);
+}
+
+plazza::Reception::~Reception() {
+    _running = false;
+
+    if (_resultCollectorThread.joinable()) {
+        _resultCollectorThread.join();
+    }
+
+    for (auto &pair : _kitchenPipes) {
+        delete pair.second.first;
+        delete pair.second.second;
+    }
+
+    for (pid_t pid : _kitchenPids) {
+        kill(pid, SIGTERM);
+    }
+
+    for (pid_t pid : _kitchenPids) {
+        waitpid(pid, nullptr, 0);
+    }
+}
+
+bool plazza::Reception::processOrder(const std::string &order) {
+    std::vector<std::string> pizzaOrders = utils::split(order, "; ");
+
+    for (auto &pizza : pizzaOrders) {
+        std::cout << "Processing pizza order: " << pizza << std::endl;
+        if (pizza.empty()) {
+            std::cout << "Empty pizza order" << std::endl;
+            return false;
+        }
+        if (!validatePizza(pizza)) {
+            return false;
+        }
+        std::cout << "valid pizza" << std::endl;
+
+        std::vector<std::string> tokenizedPizza = utils::split(pizza, " ");
+        Pizza pizzaObj = createPizza(
+            tokenizedPizza[0], tokenizedPizza[1], tokenizedPizza[2]);
+
+        std::cout << "Created pizza: " << pizzaObj.toString() << std::endl;
+        std::string countStr = tokenizedPizza[2].substr(1);
+        unsigned int count = std::stoi(countStr);
+
+        std::cout << "dispatching pizza" << std::endl;
+        for (unsigned int i = 0; i < count; ++i) {
+            dispatchPizza(pizzaObj);
+        }
+        std::cout << "dispatched pizza" << std::endl;
+    }
+
+    return true;
+}
+
+void plazza::Reception::displayStatus() const {
+    // std::cout << "Plazza Reception Status:" << std::endl;
+    // std::lock_guard<std::mutex> lock(_kitchensMutex);
+
+    std::cout << "Kitchen Status:" << std::endl;
+    std::cout << "---------------" << std::endl;
+
+    if (_kitchenPids.empty()) {
+        std::cout << "No kitchens running." << std::endl;
+        return;
+    }
+
+    for (unsigned int i = 0; i < _kitchenPids.size(); ++i) {
+        std::cout << "Kitchen " << i << ":" << std::endl;
+
+        auto it = _kitchenPipes.find(i);
+        if (it != _kitchenPipes.end()) {
+            ipc::NamedPipe *inPipe = it->second.first;
+            ipc::NamedPipe *outPipe = it->second.second;
+
+            int statusRequest = 1;
+            inPipe->write(statusRequest);
+
+            kitchen::KitchenStatus status;
+            if (outPipe->read(status)) {
+                std::cout << "  Busy Cooks: " << status.busyCooks << "/"
+                          << _cookNb << std::endl;
+                std::cout << "  Queue Size: " << status.queueSize << std::endl;
+                std::cout << "  Ingredients:" << std::endl;
+
+                for (const auto &ingredient : status.ingredients) {
+                    std::cout << "    " << ingredient.first << ": "
+                              << ingredient.second << std::endl;
+                }
+            } else {
+                std::cout << "  Unable to get status." << std::endl;
+            }
+        } else {
+            std::cout << "  Unable to communicate with kitchen." << std::endl;
+        }
+    }
+}
+
+bool plazza::Reception::validatePizza(const std::string &pizza) {
+    std::vector<std::string> tokenizedPizza = utils::split(pizza, " ");
+
+    if (tokenizedPizza.size() != 3) {
+        std::cout << (tokenizedPizza.size() < 3 ? "Too few" : "Too many")
+                  << " values: " << pizza << std::endl;
+        std::cout << "Expected format: <type> <size> <count>" << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaType(tokenizedPizza[0])) {
+        std::cout << "Invalid pizza type: " << tokenizedPizza[0] << std::endl;
+        std::cout << "Valid types are: ";
+        for (const auto &type : plazza::validPizzaTypes)
+            std::cout << type << " ";
+        std::cout << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaSize(tokenizedPizza[1])) {
+        std::cout << "Invalid pizza size: " << tokenizedPizza[1] << std::endl;
+        std::cout << "Valid sizes are: ";
+        for (const auto &size : plazza::validPizzaSizes)
+            std::cout << size << " ";
+        std::cout << std::endl;
+        return false;
+    }
+    if (!utils::isValidPizzaCount(tokenizedPizza[2])) {
+        std::cout << "Invalid pizza count: " << tokenizedPizza[2] << std::endl;
+        std::cout
+            << "Count should be in the format 'xN' where N is a positive "
+               "integer"
+            << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void plazza::Reception::createKitchen() {
+    unsigned int kitchenId = _nextKitchenId++;
+
+    std::string inPipeName =
+        "/tmp/kitchen_" + std::to_string(kitchenId) + "_in";
+    std::string outPipeName =
+        "/tmp/kitchen_" + std::to_string(kitchenId) + "_out";
+
+    std::cout << "Creating named pipes for kitchen " << kitchenId << std::endl;
+
+    ipc::NamedPipe *inPipe =
+        new ipc::NamedPipe(inPipeName, ipc::NamedPipe::WRITE);
+    ipc::NamedPipe *outPipe =
+        new ipc::NamedPipe(outPipeName, ipc::NamedPipe::READ);
+
+    std::cout << "created named pipes for kitchen " << kitchenId << std::endl;
+
+    pid_t pid = fork();
+
+    std::cout << "Forking new kitchen process with ID " << kitchenId
+              << std::endl;
+    if (pid == -1) {
+        std::cerr << "Failed to fork a new kitchen process." << std::endl;
+        delete inPipe;
+        delete outPipe;
+        return;
+    }
+
+    if (pid == 0) {
+        kitchen::Kitchen kitchen(
+            kitchenId, _cookNb, _restockTime, _cookingMultiplier);
+        kitchen.run();
+        exit(0);
+    } else {
+        std::lock_guard<std::mutex> lock(_kitchensMutex);
+        _kitchenPids.push_back(pid);
+        _kitchenPipes[kitchenId] = std::make_pair(inPipe, outPipe);
+
+        std::cout << "Created new kitchen with ID " << kitchenId << std::endl;
+    }
+}
+
+void plazza::Reception::dispatchPizza(const Pizza &pizza) {
+    unsigned int kitchenId = findAvailableKitchen();
+
+    std::cout << "Dispatching pizza to kitchen " << kitchenId << std::endl;
+    std::lock_guard<std::mutex> lock(_kitchensMutex);
+    auto it = _kitchenPipes.find(kitchenId);
+    if (it != _kitchenPipes.end()) {
+        ipc::NamedPipe *pipe = it->second.first;
+
+        int command = 3;
+        pipe->write(command);
+
+        pipe->write(pizza);
+
+        std::cout << "Dispatched " << pizza.toString() << " to kitchen "
+                  << kitchenId << std::endl;
+    }
+}
+
+unsigned int plazza::Reception::findAvailableKitchen() {
+    // std::unique_lock<std::mutex> lock(_kitchensMutex);
+
+    if (_kitchenPids.empty()) {
+        std::cout << "No kitchens available, creating a new one..."
+                  << std::endl;
+        // lock.unlock();
+        createKitchen();
+        return 0;
+    }
+
+    std::cout << "Finding available kitchen..." << std::endl;
+    unsigned int minLoad = std::numeric_limits<unsigned int>::max();
+    unsigned int minLoadKitchenId = 0;
+    bool allFull = true;
+
+    for (const auto &pair : _kitchenPipes) {
+        unsigned int kitchenId = pair.first;
+        ipc::NamedPipe *inPipe = pair.second.first;
+        ipc::NamedPipe *outPipe = pair.second.second;
+
+        int loadRequest = 2;
+        inPipe->write(loadRequest);
+
+        unsigned int load;
+        if (outPipe->read(load)) {
+            if (load < 2 * _cookNb) {
+                allFull = false;
+            }
+
+            if (load < minLoad) {
+                minLoad = load;
+                minLoadKitchenId = kitchenId;
+            }
+        }
+    }
+
+    if (allFull) {
+        // lock.unlock();
+        createKitchen();
+        return _nextKitchenId - 1;
+    }
+
+    return minLoadKitchenId;
+}
+
+void plazza::Reception::collectResults() {
+    while (_running) {
+        std::lock_guard<std::mutex> lock(_kitchensMutex);
+
+        for (auto it = _kitchenPipes.begin(); it != _kitchenPipes.end();) {
+            ipc::NamedPipe *outPipe = it->second.second;
+
+            Pizza pizza;
+            if (outPipe->read(pizza)) {
+                std::cout << "Pizza ready: " << pizza.toString() << std::endl;
+            }
+
+            int status;
+            pid_t result = waitpid(_kitchenPids[it->first], &status, WNOHANG);
+
+            if (result > 0) {
+                std::cout << "Kitchen " << it->first << " has closed."
+                          << std::endl;
+                delete it->second.first;
+                delete it->second.second;
+                it = _kitchenPipes.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+plazza::Pizza plazza::Reception::createPizza(const std::string &type,
+    const std::string &size, const std::string &count) {
+    (void)count;
+    Pizza::PizzaType pizzaType;
+    Pizza::PizzaSize pizzaSize;
+
+    if (type == "regina") {
+        pizzaType = Pizza::PizzaType::Regina;
+    } else if (type == "margarita") {
+        pizzaType = Pizza::PizzaType::Margarita;
+    } else if (type == "americana") {
+        pizzaType = Pizza::PizzaType::Americana;
+    } else if (type == "fantasia") {
+        pizzaType = Pizza::PizzaType::Fantasia;
+    }
+
+    std::string upperSize = utils::toUpper(size);
+    if (upperSize == "S") {
+        pizzaSize = Pizza::PizzaSize::S;
+    } else if (upperSize == "M") {
+        pizzaSize = Pizza::PizzaSize::M;
+    } else if (upperSize == "L") {
+        pizzaSize = Pizza::PizzaSize::L;
+    } else if (upperSize == "XL") {
+        pizzaSize = Pizza::PizzaSize::XL;
+    } else if (upperSize == "XXL") {
+        pizzaSize = Pizza::PizzaSize::XXL;
+    }
+
+    return Pizza(pizzaType, pizzaSize);
+}
+```
+
+Pizza.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Pizza
+*/
+
+#ifndef SRC_PLAZZA_PIZZA_HPP_
+#define SRC_PLAZZA_PIZZA_HPP_
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+
+namespace plazza {
+static const std::unordered_set<std::string> validPizzaTypes = {
+    "regina", "margarita", "americana", "fantasia"};
+static const std::unordered_set<std::string> validPizzaSizes = {
+    "S", "M", "L", "XL", "XXL"};
+
+class Pizza {
+ public:
+    enum PizzaType {
+        Regina = 1,
+        Margarita = 2,
+        Americana = 4,
+        Fantasia = 8
+    };
+
+    enum PizzaSize {
+        S = 1,
+        M = 2,
+        L = 4,
+        XL = 8,
+        XXL = 16
+    };
+
+    Pizza() = default;
+    Pizza(PizzaType type, PizzaSize size);
+    ~Pizza() = default;
+
+    PizzaType getType() const {
+        return _type;
+    }
+
+    PizzaSize getSize() const {
+        return _size;
+    }
+
+    std::string toString() const;
+
+ private:
+    PizzaType _type;
+    PizzaSize _size;
+};
+
+}  // namespace plazza
+
+#endif  // SRC_PLAZZA_PIZZA_HPP_
+```
+
+Kitchen.hpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** Kitchen.hpp
+** File description:
+** _
+*/
+
+#ifndef SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
+#define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
+
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <unordered_map>
+
+#include "../../NamedPipe.hpp"
+#include "../../ThreadPool.hpp"
+#include "../Pizza.hpp"
+
+namespace plazza {
+namespace kitchen {
+
+struct KitchenStatus {
+    unsigned int busyCooks;
+    unsigned int queueSize;
+    std::unordered_map<std::string, unsigned int> ingredients;
+};
+
+class Kitchen {
+ public:
+    Kitchen(unsigned int id, unsigned int cookNb, unsigned int restockTime,
+        double cookingMultiplier);
+    ~Kitchen();
+
+    void run();
+    bool addPizza(const plazza::Pizza &pizza);
+
+    unsigned int getId() const {
+        return _id;
+    }
+
+    size_t getQueueSize() const;
+    size_t getBusyCooks() const;
+    const std::unordered_map<std::string, unsigned int> &getIngredients()
+        const;
+
+ private:
+    unsigned int _id;
+    double _cookingMultiplier;
+    unsigned int _restockTime;
+    ThreadPool _cooks;
+    std::unordered_map<std::string, unsigned int> _ingredients;
+    std::queue<plazza::Pizza> _pizzaQueue;
+    std::atomic<bool> _running;
+    std::atomic<bool> _hasWork;
+    std::chrono::time_point<std::chrono::steady_clock> _lastWorkTime;
+    mutable std::mutex _queueMutex;
+    std::mutex _ingredientsMutex;
+    std::condition_variable _queueCondition;
+    std::thread _restockThread;
+    std::thread _workWatcherThread;
+    plazza::ipc::NamedPipe *_inPipe;
+    plazza::ipc::NamedPipe *_outPipe;
+
+    void restockIngredients();
+    void watchForWork();
+    bool cookPizza(const plazza::Pizza &pizza);
+    bool hasEnoughIngredients(const plazza::Pizza &pizza);
+    void useIngredients(const plazza::Pizza &pizza);
+    void processPizzaQueue();
+    void handleCommand();
+};
+
+}  // namespace kitchen
+}  // namespace plazza
+
+#endif  // SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
+```
+
+Kitchen.cpp:
+```
+// src/plazza/kitchen/Kitchen.cpp
+#include "Kitchen.hpp"
+
+#include <chrono>
+#include <iostream>
+#include <thread>
+
+namespace plazza {
+namespace kitchen {
+
+Kitchen::Kitchen(unsigned int id, unsigned int cookNb,
+    unsigned int restockTime, double cookingMultiplier)
+    : _id(id),
+      _cookingMultiplier(cookingMultiplier),
+      _restockTime(restockTime),
+      _cooks(cookNb),
+      _running(true),
+      _hasWork(false),
+      _lastWorkTime(std::chrono::steady_clock::now()) {
+    _ingredients["dough"] = 5;
+    _ingredients["tomato"] = 5;
+    _ingredients["gruyere"] = 5;
+    _ingredients["ham"] = 5;
+    _ingredients["mushrooms"] = 5;
+    _ingredients["steak"] = 5;
+    _ingredients["eggplant"] = 5;
+    _ingredients["goat cheese"] = 5;
+    _ingredients["chief love"] = 5;
+
+    std::string inPipeName = "/tmp/kitchen_" + std::to_string(_id) + "_in";
+    std::string outPipeName = "/tmp/kitchen_" + std::to_string(_id) + "_out";
+
+    _inPipe =
+        new plazza::ipc::NamedPipe(inPipeName, plazza::ipc::NamedPipe::READ);
+    _outPipe =
+        new plazza::ipc::NamedPipe(outPipeName, plazza::ipc::NamedPipe::WRITE);
+
+    _restockThread = std::thread(&Kitchen::restockIngredients, this);
+
+    _workWatcherThread = std::thread(&Kitchen::watchForWork, this);
+}
+
+Kitchen::~Kitchen() {
+    _running = false;
+
+    if (_restockThread.joinable()) {
+        _restockThread.join();
+    }
+
+    if (_workWatcherThread.joinable()) {
+        _workWatcherThread.join();
+    }
+
+    delete _inPipe;
+    delete _outPipe;
+}
+
+void Kitchen::run() {
+    std::cout << "Kitchen " << _id << " started with "
+              << _cooks.getThreadCount() << " cooks" << std::endl;
+
+    while (_running) {
+        handleCommand();
+
+        processPizzaQueue();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    std::cout << "Kitchen " << _id << " closed" << std::endl;
+}
+
+void Kitchen::handleCommand() {
+    int command;
+    if (_inPipe->read(command)) {
+        switch (command) {
+            case 1: {  // Status request
+                KitchenStatus status;
+                status.busyCooks = _cooks.getBusyCount();
+                status.queueSize = getQueueSize();
+                status.ingredients = _ingredients;
+                _outPipe->write(status);
+                break;
+            }
+            case 2: {  // Load request
+                unsigned int load = getQueueSize() + _cooks.getBusyCount();
+                _outPipe->write(load);
+                break;
+            }
+            case 3: {  // Pizza order
+                Pizza pizza;
+                if (_inPipe->read(pizza)) {
+                    addPizza(pizza);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+bool Kitchen::addPizza(const plazza::Pizza &pizza) {
+    std::lock_guard<std::mutex> lock(_queueMutex);
+
+    if (_pizzaQueue.size() + _cooks.getBusyCount() >=
+        2 * _cooks.getThreadCount()) {
+        return false;
+    }
+
+    _pizzaQueue.push(pizza);
+    _hasWork = true;
+    _lastWorkTime = std::chrono::steady_clock::now();
+    _queueCondition.notify_one();
+
+    return true;
+}
+
+size_t Kitchen::getQueueSize() const {
+    std::lock_guard<std::mutex> lock(_queueMutex);
+    return _pizzaQueue.size();
+}
+
+size_t Kitchen::getBusyCooks() const {
+    return _cooks.getBusyCount();
+}
+
+const std::unordered_map<std::string, unsigned int> &Kitchen::getIngredients()
+    const {
+    return _ingredients;
+}
+
+void Kitchen::restockIngredients() {
+    while (_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(_restockTime));
+
+        std::lock_guard<std::mutex> lock(_ingredientsMutex);
+        for (auto &ingredient : _ingredients) {
+            ingredient.second += 1;
+        }
+    }
+}
+
+void Kitchen::watchForWork() {
+    while (_running) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+            now - _lastWorkTime)
+                           .count();
+
+        if (!_hasWork && elapsed > 5) {
+            std::cout << "Kitchen " << _id << " is closing due to inactivity."
+                      << std::endl;
+            _running = false;
+            break;
+        }
+
+        _hasWork = false;
+    }
+}
+
+bool Kitchen::cookPizza(const plazza::Pizza &pizza) {
+    if (!hasEnoughIngredients(pizza)) {
+        return false;
+    }
+
+    useIngredients(pizza);
+
+    int cookingTime = 0;
+    switch (pizza.getType()) {
+        case plazza::Pizza::PizzaType::Margarita:
+            cookingTime = 1000;
+            break;
+        case plazza::Pizza::PizzaType::Regina:
+            cookingTime = 2000;
+            break;
+        case plazza::Pizza::PizzaType::Americana:
+            cookingTime = 2000;
+            break;
+        case plazza::Pizza::PizzaType::Fantasia:
+            cookingTime = 4000;
+            break;
+    }
+
+    cookingTime *= _cookingMultiplier;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(cookingTime));
+
+    _outPipe->write(pizza);
+
+    return true;
+}
+
+bool Kitchen::hasEnoughIngredients(const plazza::Pizza &pizza) {
+    std::lock_guard<std::mutex> lock(_ingredientsMutex);
+
+    if (_ingredients["dough"] < 1 || _ingredients["tomato"] < 1) {
+        return false;
+    }
+
+    switch (pizza.getType()) {
+        case plazza::Pizza::PizzaType::Margarita:
+            return _ingredients["gruyere"] >= 1;
+        case plazza::Pizza::PizzaType::Regina:
+            return _ingredients["gruyere"] >= 1 && _ingredients["ham"] >= 1 &&
+                   _ingredients["mushrooms"] >= 1;
+        case plazza::Pizza::PizzaType::Americana:
+            return _ingredients["gruyere"] >= 1 && _ingredients["steak"] >= 1;
+        case plazza::Pizza::PizzaType::Fantasia:
+            return _ingredients["eggplant"] >= 1 &&
+                   _ingredients["goat cheese"] >= 1 &&
+                   _ingredients["chief love"] >= 1;
+        default:
+            return false;
+    }
+}
+
+void Kitchen::useIngredients(const plazza::Pizza &pizza) {
+    std::lock_guard<std::mutex> lock(_ingredientsMutex);
+
+    _ingredients["dough"] -= 1;
+    _ingredients["tomato"] -= 1;
+
+    switch (pizza.getType()) {
+        case plazza::Pizza::PizzaType::Margarita:
+            _ingredients["gruyere"] -= 1;
+            break;
+        case plazza::Pizza::PizzaType::Regina:
+            _ingredients["gruyere"] -= 1;
+            _ingredients["ham"] -= 1;
+            _ingredients["mushrooms"] -= 1;
+            break;
+        case plazza::Pizza::PizzaType::Americana:
+            _ingredients["gruyere"] -= 1;
+            _ingredients["steak"] -= 1;
+            break;
+        case plazza::Pizza::PizzaType::Fantasia:
+            _ingredients["eggplant"] -= 1;
+            _ingredients["goat cheese"] -= 1;
+            _ingredients["chief love"] -= 1;
+            break;
+    }
+}
+
+void Kitchen::processPizzaQueue() {
+    std::unique_lock<std::mutex> lock(_queueMutex);
+
+    if (_pizzaQueue.empty()) {
+        return;
+    }
+
+    plazza::Pizza pizza = _pizzaQueue.front();
+    _pizzaQueue.pop();
+    lock.unlock();
+
+    _cooks.enqueue([this, pizza]() { this->cookPizza(pizza); });
+}
+
+}  // namespace kitchen
+}  // namespace plazza
+```
+
+Pizza.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** Pizza
+*/
+
+#include "Pizza.hpp"
+
+#include <sstream>
+
+plazza::Pizza::Pizza(PizzaType type, PizzaSize size)
+    : _type(type), _size(size) {}
+
+std::string plazza::Pizza::toString() const {
+    std::stringstream ss;
+
+    switch (_type) {
+        case PizzaType::Regina:
+            ss << "Regina";
+            break;
+        case PizzaType::Margarita:
+            ss << "Margarita";
+            break;
+        case PizzaType::Americana:
+            ss << "Americana";
+            break;
+        case PizzaType::Fantasia:
+            ss << "Fantasia";
+            break;
+    }
+
+    ss << " ";
+
+    switch (_size) {
+        case PizzaSize::S:
+            ss << "S";
+            break;
+        case PizzaSize::M:
+            ss << "M";
+            break;
+        case PizzaSize::L:
+            ss << "L";
+            break;
+        case PizzaSize::XL:
+            ss << "XL";
+            break;
+        case PizzaSize::XXL:
+            ss << "XXL";
+            break;
+    }
+
+    return ss.str();
+}
+```
+
+CLI.cpp:
+```
+/*
+** EPITECH PROJECT, 2025
+** La-Pizza-Delamama
+** File description:
+** CLI
+*/
+
+#include "CLI.hpp"
+
+#include <iostream>
+#include <string>
+
+#include "Utils.hpp"
+
+plazza::CLI::CLI(
+    double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
+    : _reception(cookingMultiplier, cookNb, restockTime) {}
+
+void plazza::CLI::runInterface() {
+    while (true) {
+        printPrompt();
+        std::getline(std::cin, _lastInput);
+        handleInput(_lastInput);
+    }
+}
+
+void plazza::CLI::printPrompt() {
+    std::cout << _prompt;
+}
+
+void plazza::CLI::handleInput(const std::string &input) {
+    if (input == _exitCommand) {
+        handleExit();
+    } else if (input == _helpCommand) {
+        handleHelp();
+    } else if (input == _statusCommand) {
+        handleStatus();
+    } else if (_reception.processOrder(utils::toLower(input)) == false) {
+        std::cout << "Invalid order: " << input << std::endl;
+        std::cout << "Type 'help' for more information." << std::endl;
+    }
+}
+
+void plazza::CLI::handleExit() {
+    std::cout << "Bye" << std::endl;
+    exit(0);
+}
+
+void plazza::CLI::handleHelp() {
+    std::cout << _helpMessage << std::endl;
+}
+
+void plazza::CLI::handleStatus() {
+    _reception.displayStatus();
+}
+
+std::string plazza::CLI::getLastInput() const {
+    return _lastInput;
+}
+
+plazza::CLI::CLIException::CLIException(const std::string &errmsg)
+    : _errmsg(errmsg) {}
+
+const char *plazza::CLI::CLIException::what() const noexcept {
+    return _errmsg.c_str();
+}
+```
+
