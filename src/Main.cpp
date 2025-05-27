@@ -7,60 +7,15 @@
 
 #include <unistd.h>
 
-#include <cstdio>
-#include <iostream>
-#include <string>
-
 #include "CLI.hpp"
-#include "NamedPipe.hpp"
 #include "Parser.hpp"
 
 int main(int ac, char **av) {
-    // Parser parser(ac, av);
-    // if (!parser.parse())
-    //     return 84;
-    // plazza::CLI shell(parser.getCookingMultiplier(), parser.getCookNb(),
-    //     parser.getRestockTime());
-    // shell.runInterface();
-    (void)ac;
-    (void)av;
-    NamedPipe pipe("/tmp/pizza_pipe");
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork");
+    Parser parser(ac, av);
+    if (!parser.parse())
         return 84;
-    }
-    if (pid == 0) {
-        // Child process
-        std::cout << "Child: " << pipe.getPipePath() << std::endl;
-        while (true) {
-            try {
-                std::string data = pipe.readString();
-                std::cout << "Child received: " << data << std::endl;
-                pipe.writeString("Hello back from child! ");
-                pipe.writeString("This is a response string. ");
-                pipe.writeString("end of response string is here\n");
-            } catch (const std::runtime_error &e) {
-                std::cerr << "Error in child: " << e.what() << std::endl;
-                break;
-            }
-        }
-    } else {
-        // Parent process
-        std::cout << "Parent: " << pipe.getPipePath() << std::endl;
-        while (true) {
-            try {
-                pipe.writeString("Hello from parent! ");
-                pipe.writeString("This is a test string. ");
-                pipe.writeString("end of string is here\n");
-                std::string response = pipe.readString();
-                std::cout << "Parent received: " << response << std::endl;
-                sleep(1);
-            } catch (const std::runtime_error &e) {
-                std::cerr << "Error in parent: " << e.what() << std::endl;
-                break;
-            }
-        }
-    }
+    plazza::CLI shell(parser.getCookingMultiplier(), parser.getCookNb(),
+        parser.getRestockTime());
+    shell.runInterface();
     return 0;
 }
