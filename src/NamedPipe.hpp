@@ -12,7 +12,7 @@
 class NamedPipe {
  public:
     explicit NamedPipe(const std::string &pipePath);
-    ~NamedPipe();
+    ~NamedPipe() noexcept(false);
     operator const char *() const;
     const std::string &getPipePath() const;
     std::string readString();

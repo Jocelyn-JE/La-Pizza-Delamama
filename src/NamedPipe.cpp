@@ -21,7 +21,7 @@ NamedPipe::NamedPipe(const std::string &pipePath) : _pipePath(pipePath) {
                                  "\n" + strerror(errno) + "\n");
 }
 
-NamedPipe::~NamedPipe() {
+NamedPipe::~NamedPipe() noexcept(false) {
     if (unlink(_pipePath.c_str()) == -1) {
         throw std::runtime_error("Failed to remove named pipe: " + _pipePath +
                                  "\n" + strerror(errno) + "\n");
