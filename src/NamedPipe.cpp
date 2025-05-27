@@ -12,17 +12,23 @@
 #include <unistd.h>
 
 #include <cstring>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 
 NamedPipe::NamedPipe(const std::string &pipePath) : _pipePath(pipePath) {
+    if (!std::filesystem::is_fifo(_pipePath.c_str()) &&
+        !std::filesystem::exists(_pipePath.c_str())) {
     if (mkfifo(_pipePath.c_str(), 0666) == -1)
-        throw std::runtime_error("Failed to create named pipe: " + _pipePath +
-                                 "\n" + strerror(errno) + "\n");
+            throw std::runtime_error(
+                "Failed to create named pipe: " + _pipePath + "\n" +
+                strerror(errno) + "\n");
+    }
 }
 
 NamedPipe::~NamedPipe() noexcept(false) {
-    if (unlink(_pipePath.c_str()) == -1) {
+    if (std::filesystem::is_fifo(_pipePath.c_str()) &&
+        unlink(_pipePath.c_str()) == -1) {
         throw std::runtime_error("Failed to remove named pipe: " + _pipePath +
                                  "\n" + strerror(errno) + "\n");
     }
