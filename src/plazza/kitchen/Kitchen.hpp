@@ -9,10 +9,10 @@
 #define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 
 #include <ctime>
-#include <string>
 #include <thread>
 #include <vector>
 
+#include "NamedPipe.hpp"
 #include "plazza/Pizza.hpp"
 
 namespace plazza {
@@ -48,7 +48,7 @@ class Ingredients {
 class Kitchen {
  public:
     Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
-        unsigned int restockTime, std::string kitchenName);
+        unsigned int restockTime, NamedPipe &kitchenName);
     ~Kitchen();
     void cook();
 
@@ -56,7 +56,7 @@ class Kitchen {
     unsigned int _cookingMultiplier;
     unsigned int _cookNb;
     unsigned int _restockTime;
-    std::string _kitchenName;
+    NamedPipe &_kitchenPipe;
 
     std::clock_t _timePassed;
     std::time_t _lastRestockTime;

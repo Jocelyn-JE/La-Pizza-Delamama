@@ -8,15 +8,16 @@
 #include "Kitchen.hpp"
 
 #include <iostream>
-#include <string>
+
+#include "NamedPipe.hpp"
 
 namespace plazza {
 Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
-    unsigned int restockTime, std::string kitchenName)
+    unsigned int restockTime, NamedPipe &kitchenPipe)
     : _cookingMultiplier(cookingMultiplier),
       _cookNb(cookNb),
       _restockTime(restockTime),
-      _kitchenName(kitchenName) {
+      _kitchenPipe(kitchenPipe) {
     _cooks.reserve(cookNb);
 }
 
@@ -26,7 +27,8 @@ Kitchen::~Kitchen() {
             cook.join();
         }
     }
-    std::cout << "Kitchen " << this->_kitchenName << " closed." << std::endl;
+    std::cout << "Kitchen " << this->_kitchenPipe.getPipePath() << " closed."
+              << std::endl;
     this->_cooks.clear();
     this->_pizzasToCook.clear();
     this->_timePassed = 0;
@@ -39,7 +41,8 @@ void Kitchen::cook() {
     this->_lastCookTime = std::time(nullptr);
     this->_lastRestockTime = std::time(nullptr);
     std::cout << "Create the " << this->_cookNb
-              << " cooks for kitchen: " << this->_kitchenName << std::endl;
+              << " cooks for kitchen: " << this->_kitchenPipe.getPipePath()
+              << std::endl;
 
     while (1) {
         std::clock_t currentTime = std::clock();
@@ -50,11 +53,11 @@ void Kitchen::cook() {
             this->_lastRestockTime = std::time(nullptr);
             this->_ingredients.restock();
             std::cout << "Restocking ingredients in kitchen: "
-                      << this->_kitchenName << std::endl;
+                      << this->_kitchenPipe.getPipePath() << std::endl;
         }
         if (std::difftime(std::time(nullptr), this->_lastCookTime) >= 5) {
-            std::cout << "Closing kitchen: " << this->_kitchenName
-                      << std::endl;
+            std::cout << "Closing kitchen: "
+                      << this->_kitchenPipe.getPipePath() << std::endl;
             break;
         }
         // if status received, print status

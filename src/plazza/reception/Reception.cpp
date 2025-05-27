@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <cstdio>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -16,6 +17,7 @@
 #include "NamedPipe.hpp"
 #include "Utils.hpp"
 #include "plazza/Pizza.hpp"
+#include "plazza/kitchen/Kitchen.hpp"
 
 plazza::Reception::Reception(
     double cookingMultiplier, unsigned int cookNb, unsigned int restockTime)
@@ -83,34 +85,13 @@ void plazza::Reception::createNewKitchen() {
         throw std::runtime_error("Failed to fork process");
     }
     if (pid == 0) {
-        std::cout << "Child: " << pipe.getPipePath() << std::endl;
-        while (true) {
-            try {
-                std::string data = pipe.readString();
-                std::cout << "Child received: " << data << std::endl;
-                pipe.writeString("Hello back from child! ");
-                pipe.writeString("This is a response string. ");
-                pipe.writeString("end of response string is here\n");
-            } catch (const std::runtime_error &e) {
-                std::cerr << "Error in child: " << e.what() << std::endl;
-                break;
-            }
+        try {
+            Kitchen kitchen(_cookingMultiplier, _cookNb, _restockTime, pipe);
+        } catch (std::exception &e) {
+            std::cout << "Child process error: " << e.what() << std::endl;
         }
         exit(0);
     } else {
         std::cout << "Parent: " << pipe.getPipePath() << std::endl;
-        while (true) {
-            try {
-                pipe.writeString("Hello from parent! ");
-                pipe.writeString("This is a test string. ");
-                pipe.writeString("end of string is here\n");
-                std::string response = pipe.readString();
-                std::cout << "Parent received: " << response << std::endl;
-                sleep(1);
-            } catch (const std::runtime_error &e) {
-                std::cerr << "Error in parent: " << e.what() << std::endl;
-                break;
-            }
-        }
     }
 }
