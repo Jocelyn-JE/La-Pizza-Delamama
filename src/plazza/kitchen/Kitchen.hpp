@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "plazza/Pizza.hpp"
+#include "../src/SafeQueue.hpp"
 
 namespace plazza {
 
@@ -35,15 +36,15 @@ class Ingredients {
         chiefLove += 1;
     }
 
-    uint8_t dough = 0;
-    uint8_t tomato = 0;
-    uint8_t gruyere = 0;
-    uint8_t ham = 0;
-    uint8_t mushrooms = 0;
-    uint8_t steak = 0;
-    uint8_t eggplant = 0;
-    uint8_t goatCheese = 0;
-    uint8_t chiefLove = 0;
+    uint16_t dough = 0;
+    uint16_t tomato = 0;
+    uint16_t gruyere = 0;
+    uint16_t ham = 0;
+    uint16_t mushrooms = 0;
+    uint16_t steak = 0;
+    uint16_t eggplant = 0;
+    uint16_t goatCheese = 0;
+    uint16_t chiefLove = 0;
 };
 
 class Kitchen {
@@ -52,6 +53,26 @@ class Kitchen {
         unsigned int restockTime, std::string kitchenName);
     ~Kitchen();
     void cook();
+    bool isOpen() const;
+    bool decrementIngredients(const plazza::Pizza &pizza);
+    SafeQueue<plazza::Pizza> &getPizzasToCook() {
+        return _pizzasToCook;
+    }
+    SafeQueue<plazza::Pizza> &getPizzasCooked() {
+        return _pizzasCooked;
+    }
+    unsigned int getCookingMultiplier() const {
+        return _cookingMultiplier;
+    }
+    unsigned int getCookNb() const {
+        return _cookNb;
+    }
+    unsigned int getRestockTime() const {
+        return _restockTime;
+    }
+    std::string getKitchenName() const {
+        return _kitchenName;
+    }
 
  private:
     unsigned int _cookingMultiplier;
@@ -64,9 +85,13 @@ class Kitchen {
     std::time_t _lastCookTime;
 
     std::vector<std::thread> _cooks;
-    std::vector<plazza::Pizza> _pizzasToCook;
+    SafeQueue<plazza::Pizza> _pizzasToCook;
+    SafeQueue<plazza::Pizza> _pizzasCooked;
 
     Ingredients _ingredients;
+    std::mutex _ingredientsMutex;
+
+    bool _kitchenOpen;
 };
 }  // namespace plazza
 
