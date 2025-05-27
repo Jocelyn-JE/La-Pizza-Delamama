@@ -19,7 +19,7 @@
 NamedPipe::NamedPipe(const std::string &pipePath) : _pipePath(pipePath) {
     if (!std::filesystem::is_fifo(_pipePath.c_str()) &&
         !std::filesystem::exists(_pipePath.c_str())) {
-    if (mkfifo(_pipePath.c_str(), 0666) == -1)
+        if (mkfifo(_pipePath.c_str(), 0666) == -1)
             throw std::runtime_error(
                 "Failed to create named pipe: " + _pipePath + "\n" +
                 strerror(errno) + "\n");
@@ -44,7 +44,6 @@ const std::string &NamedPipe::getPipePath() const {
 
 std::string NamedPipe::readString() {
     int fd = tryOpen(O_RDONLY);
-    std::string lineBuffer;
     char buffer[BUFSIZ];
     ssize_t bytesRead;
 
@@ -57,10 +56,19 @@ std::string NamedPipe::readString() {
                 strerror(errno) + "\n");
         }
         buffer[bytesRead] = '\0';
-        lineBuffer += buffer;
-    } while (bytesRead > 0 && lineBuffer.find('\n') == std::string::npos);
+        _readBuffer += buffer;
+    } while (_readBuffer.find('\n') == std::string::npos);
     tryClose(fd);
-    return lineBuffer;
+    return getLineFromReadBuffer();
+}
+
+std::string NamedPipe::getLineFromReadBuffer() {
+    size_t pos = _readBuffer.find('\n');
+    if (pos == std::string::npos)
+        return "";
+    std::string line = _readBuffer.substr(0, pos);
+    _readBuffer.erase(0, pos + 1);
+    return line;
 }
 
 void NamedPipe::writeString(const std::string &data) {

@@ -21,6 +21,8 @@ class NamedPipe {
  protected:
  private:
     std::string _pipePath;
+    std::string _readBuffer;
+    std::string getLineFromReadBuffer();
     void tryClose(int fd) const;
     int tryOpen(int mode) const;
 };
