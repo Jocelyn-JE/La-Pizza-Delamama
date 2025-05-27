@@ -25,7 +25,7 @@ OBJ					=	$(SRC:.cpp=.o)
 MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
 
 # Tests sources ---------------------------------------------------------------
-SRC_TESTS			=
+SRC_TESTS			=	./tests/namedpipe.cpp					\
 
 # Flags -----------------------------------------------------------------------
 INCLUDES			=	-I./include/ -I./src/
