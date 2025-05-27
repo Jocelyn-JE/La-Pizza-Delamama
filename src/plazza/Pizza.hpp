@@ -19,6 +19,7 @@ static const std::unordered_set<std::string> validPizzaSizes = {
 class Pizza {
  public:
     enum PizzaType {
+        NONE = 0,
         Regina = 1,
         Margarita = 2,
         Americana = 4,
@@ -26,20 +27,44 @@ class Pizza {
     };
 
     enum PizzaSize {
+        NONE = 0,
         S = 1,
         M = 2,
         L = 4,
         XL = 8,
         XXL = 16
     };
+    std::time_t getPizzaTime() const {
+        if (_type == PizzaType::NONE || _size == PizzaSize::NONE) {
+            return 0;  // Invalid pizza
+        }
+        if (_type == PizzaType::Regina) {
+            return 1000;  // Example time for Regina
+        } else if (_type == PizzaType::Margarita) {
+            return 2000;  // Example time for Margarita
+        } else if (_type == PizzaType::Americana) {
+            return 2000;  // Example time for Americana
+        } else if (_type == PizzaType::Fantasia) {
+            return 4000;  // Example time for Fantasia
+        }
+    }
 
-    Pizza() = delete;
+    Pizza() {
+        _type = PizzaType::NONE;      // Default type
+        _size = PizzaSize::NONE;      // Default size
+    }
     Pizza(PizzaType type, PizzaSize size);
     ~Pizza() = default;
+    PizzaType getType() const {
+        return _type;
+    }
+    PizzaSize getSize() const {
+        return _size;
+    }
 
  private:
-    const PizzaType _type;
-    const PizzaSize _size;
+    PizzaType _type;
+    PizzaSize _size;
 };
 }  // namespace plazza
 
