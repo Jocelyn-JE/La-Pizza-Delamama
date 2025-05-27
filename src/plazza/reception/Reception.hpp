@@ -18,6 +18,7 @@ class Reception {
     ~Reception() = default;
     // Function to process an order, returns true if the order is valid
     bool processOrder(const std::string &order);
+    void createNewKitchen();
 
  protected:
  private:

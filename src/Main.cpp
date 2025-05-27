@@ -5,6 +5,8 @@
 ** Main
 */
 
+#include <unistd.h>
+
 #include "CLI.hpp"
 #include "Parser.hpp"
 

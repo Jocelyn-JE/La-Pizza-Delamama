@@ -16,6 +16,7 @@ MAIN_SRC			=	./src/Main.cpp
 
 SRC					=	./src/CLI.cpp							\
 						./src/Utils.cpp							\
+						./src/NamedPipe.cpp						\
 						./src/Parser.cpp						\
 						./src/plazza/reception/Reception.cpp	\
 
@@ -24,7 +25,7 @@ OBJ					=	$(SRC:.cpp=.o)
 MAIN_OBJ			=	$(MAIN_SRC:.cpp=.o)
 
 # Tests sources ---------------------------------------------------------------
-SRC_TESTS			=
+SRC_TESTS			=	./tests/namedpipe.cpp					\
 
 # Flags -----------------------------------------------------------------------
 INCLUDES			=	-I./include/ -I./src/
