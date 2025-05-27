@@ -32,6 +32,7 @@ class CLI {
 
  private:
     plazza::Reception _reception;
+    std::string _statusCommand = "status";
     std::string _lastInput = "";
     std::string _prompt = "plazza> ";
     std::string _exitCommand = "exit";
@@ -47,6 +48,7 @@ class CLI {
     void handleInput(const std::string &input);
     void handleExit();
     void handleHelp();
+    void handleStatus();
 };
 };  // namespace plazza
 

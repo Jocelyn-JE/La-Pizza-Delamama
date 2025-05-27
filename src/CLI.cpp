@@ -33,6 +33,8 @@ void plazza::CLI::handleInput(const std::string &input) {
         handleExit();
     } else if (input == _helpCommand) {
         handleHelp();
+    } else if (input == _statusCommand) {
+        handleStatus();
     } else if (_reception.processOrder(utils::toLower(input)) == false) {
         std::cout << "Invalid order: " << input << std::endl;
         std::cout << "Type 'help' for more information." << std::endl;
@@ -42,6 +44,10 @@ void plazza::CLI::handleInput(const std::string &input) {
 void plazza::CLI::handleExit() {
     std::cout << "Bye" << std::endl;
     exit(0);
+}
+
+void plazza::CLI::handleStatus() {
+    std::cout << "To be implemented." << std::endl;
 }
 
 void plazza::CLI::handleHelp() {
