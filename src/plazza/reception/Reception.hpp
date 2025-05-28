@@ -8,6 +8,9 @@
 #ifndef SRC_PLAZZA_RECEPTION_RECEPTION_HPP_
 #define SRC_PLAZZA_RECEPTION_RECEPTION_HPP_
 #include <string>
+#include <vector>
+
+#include "NamedPipe.hpp"
 
 namespace plazza {
 class Reception {
@@ -26,6 +29,9 @@ class Reception {
     unsigned int _cookNb;
     unsigned int _restockTime;
     bool validatePizza(const std::string &pizza);
+    void sendPizzaToKitchen(const std::string &pizza);
+    std::vector<NamedPipe> _kitchenPipes;
+    unsigned int _kitchenCount = 0;
 };
 }  // namespace plazza
 

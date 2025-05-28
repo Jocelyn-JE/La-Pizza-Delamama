@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "NamedPipe.hpp"
 #include "Utils.hpp"
 #include "plazza/Pizza.hpp"
 #include "plazza/kitchen/Kitchen.hpp"
@@ -36,8 +35,18 @@ bool plazza::Reception::processOrder(const std::string &order) {
         }
         if (!validatePizza(pizza))
             return false;
+        sendPizzaToKitchen(pizza);
     }
     return true;
+}
+
+void plazza::Reception::sendPizzaToKitchen(const std::string &pizza) {
+    if (_kitchenPipes.empty())
+        createNewKitchen();
+    std::cout << "Sending pizza to kitchen: "
+              << _kitchenPipes.back().getPipePath() << std::endl;
+    _kitchenPipes.back().writeString(pizza);
+    std::cout << "Sent pizza to kitchen: " << pizza << std::endl;
 }
 
 bool plazza::Reception::validatePizza(const std::string &pizza) {
@@ -77,21 +86,29 @@ bool plazza::Reception::validatePizza(const std::string &pizza) {
 }
 
 void plazza::Reception::createNewKitchen() {
-    NamedPipe pipe("/tmp/pizza_pipe");
-    pid_t pid = fork();
+    pid_t pid;
 
+    _kitchenPipes.emplace_back(
+        "/tmp/pizza_pipe_" + std::to_string(_kitchenCount));
+    _kitchenCount++;
+    pid = fork();
     if (pid == -1) {
         perror("fork");
         throw std::runtime_error("Failed to fork process");
     }
     if (pid == 0) {
         try {
-            Kitchen kitchen(_cookingMultiplier, _cookNb, _restockTime, pipe);
+            std::cout << "Child process created for kitchen: "
+                      << _kitchenPipes.back().getPipePath() << std::endl;
+            Kitchen kitchen(_cookingMultiplier, _cookNb, _restockTime,
+                _kitchenPipes.back());
+            kitchen.cook();
         } catch (std::exception &e) {
             std::cout << "Child process error: " << e.what() << std::endl;
         }
         exit(0);
     } else {
-        std::cout << "Parent: " << pipe.getPipePath() << std::endl;
+        std::cout << "Parent: " << _kitchenPipes.back().getPipePath()
+                  << std::endl;
     }
 }
