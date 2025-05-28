@@ -7,6 +7,8 @@
 
 #include "Pizza.hpp"
 
+#include <string>
+
 plazza::Pizza::Pizza(PizzaType type, PizzaSize size)
     : _type(type), _size(size) {}
 
