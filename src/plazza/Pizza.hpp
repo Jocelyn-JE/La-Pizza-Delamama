@@ -36,6 +36,8 @@ class Pizza {
         XXL = 16
     };
 
+    std::string getTypeString() const;
+    std::string getSizeString() const;
     std::time_t getPizzaTime() const;
 
     Pizza();
