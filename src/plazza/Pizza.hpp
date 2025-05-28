@@ -35,33 +35,13 @@ class Pizza {
         XL = 8,
         XXL = 16
     };
-    std::time_t getPizzaTime() const {
-        if (_type == PizzaType::NONE_TYPE || _size == PizzaSize::NONE_SIZE) {
-            return 0;  // Invalid pizza
-        }
-        if (_type == PizzaType::Regina) {
-            return 1000;  // Example time for Regina
-        } else if (_type == PizzaType::Margarita) {
-            return 2000;  // Example time for Margarita
-        } else if (_type == PizzaType::Americana) {
-            return 2000;  // Example time for Americana
-        } else if (_type == PizzaType::Fantasia) {
-            return 4000;  // Example time for Fantasia
-        }
-    }
+    std::time_t getPizzaTime() const;
 
-    Pizza() {
-        _type = PizzaType::NONE_TYPE;      // Default type
-        _size = PizzaSize::NONE_SIZE;      // Default size
-    }
+    Pizza();
     Pizza(PizzaType type, PizzaSize size);
     ~Pizza() = default;
-    PizzaType getType() const {
-        return _type;
-    }
-    PizzaSize getSize() const {
-        return _size;
-    }
+    PizzaType getType();
+    PizzaSize getSize();
 
  private:
     PizzaType _type;
