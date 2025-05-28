@@ -9,11 +9,13 @@
 #define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 
 #include <ctime>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "../Pizza.hpp"
 #include "../src/SafeQueue.hpp"
+#include "NamedPipe.hpp"
 #include "plazza/Pizza.hpp"
 
 namespace plazza {
@@ -76,7 +78,7 @@ class Kitchen {
     }
 
     std::string getKitchenName() const {
-        return _kitchenName;
+        return _kitchenPipe.getPipePath();
     }
 
  private:
