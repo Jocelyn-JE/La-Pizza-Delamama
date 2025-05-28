@@ -13,11 +13,11 @@ plazza::Pizza::Pizza(PizzaType type, PizzaSize size)
 plazza::Pizza::Pizza()
     : _type(PizzaType::NONE_TYPE), _size(PizzaSize::NONE_SIZE) {}
 
-plazza::Pizza::PizzaType plazza::Pizza::getType() {
+plazza::Pizza::PizzaType plazza::Pizza::getType() const {
     return _type;
 }
 
-plazza::Pizza::PizzaSize plazza::Pizza::getSize() {
+plazza::Pizza::PizzaSize plazza::Pizza::getSize() const {
     return _size;
 }
 

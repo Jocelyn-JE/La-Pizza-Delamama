@@ -40,8 +40,8 @@ class Pizza {
     Pizza();
     Pizza(PizzaType type, PizzaSize size);
     ~Pizza() = default;
-    PizzaType getType();
-    PizzaSize getSize();
+    PizzaType getType() const;
+    PizzaSize getSize() const;
 
  private:
     PizzaType _type;
