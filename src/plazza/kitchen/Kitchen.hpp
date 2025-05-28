@@ -13,7 +13,7 @@
 #include <thread>
 #include <vector>
 
-#include "plazza/Pizza.hpp"
+#include "../Pizza.hpp"
 #include "../src/SafeQueue.hpp"
 
 namespace plazza {

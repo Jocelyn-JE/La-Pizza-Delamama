@@ -6,18 +6,20 @@
 */
 
 #include "Kitchen.hpp"
+#include "./cook/Cook.hpp"
 
 #include <iostream>
 
-static void cookThread(plazza::Kitchen &kitchen) {
-    SafeQueue<plazza::Pizza> &pizzasToCook = kitchen.getPizzasToCook();
-    SafeQueue<plazza::Pizza> &pizzasCooked = kitchen.getPizzasCooked();
+static void cookThread(plazza::Cook cook) {
+    // cook.cook(); // Start cooking process in the cook thread
+    SafeQueue<plazza::Pizza> &pizzasToCook = cook.kitchen.getPizzasToCook();
+    SafeQueue<plazza::Pizza> &pizzasCooked = cook.kitchen.getPizzasCooked();
     plazza::Pizza pizza;
-    bool hasPizza = false;
-    while (kitchen.isOpen()) {
+    cook.working = false;
+    while (cook.kitchen.isOpen()) {
         if (pizzasToCook.tryPop(pizza)) {
-            if (kitchen.decrementIngredients(pizza)) {
-                hasPizza = true;
+            if (cook.kitchen.decrementIngredients(pizza)) {
+                cook.working = true;
             } else {
                 std::cout << "Not enough ingredients for pizza: "
                           << pizza.getType() << " of size " << pizza.getSize()
@@ -26,14 +28,14 @@ static void cookThread(plazza::Kitchen &kitchen) {
             }
             // Simulate cooking time based on pizza size and cooking multiplier
             std::this_thread::sleep_for(std::chrono::milliseconds(
-                pizza.getPizzaTime() * kitchen.getCookingMultiplier()));
+                pizza.getPizzaTime() * cook.kitchen.getCookingMultiplier()));
             pizzasCooked.push(pizza);
             std::cout << "Pizza cooked: " << pizza.getType() << " of size "
                       << pizza.getSize() << std::endl;
         }
-        hasPizza = false;
+        cook.working = false;
     }
-    std::cout << "Cook thread finished for kitchen: " << kitchen.getKitchenName() << std::endl;
+    std::cout << "Cook thread finished for kitchen: " << cook.kitchen.getKitchenName() << std::endl;
 }
 
 namespace plazza {
@@ -133,7 +135,8 @@ void Kitchen::cook() {
               << " cooks for kitchen: " << this->_kitchenName << std::endl;
 
     for (unsigned int i = 0; i < this->_cookNb; ++i) {
-        this->_cooks.emplace_back(cookThread, std::ref(*this));
+        plazza::Cook cook(std::ref(*this));
+        this->_cooks.emplace_back(cookThread, std::move(cook));
         std::cout << "Cook " << i + 1 << " created for kitchen: "
                   << this->_kitchenName << std::endl;
     }
