@@ -20,6 +20,8 @@ SRC					=	./src/CLI.cpp							\
 						./src/Parser.cpp						\
 						./src/plazza/reception/Reception.cpp	\
 						./src/plazza/kitchen/Kitchen.cpp		\
+						./src/plazza/kitchen/cook/Cook.cpp		\
+						./src/plazza/Pizza.cpp				\
 
 OBJ					=	$(SRC:.cpp=.o)
 
