@@ -13,14 +13,13 @@
 #include <thread>
 #include <vector>
 
-#include "../Pizza.hpp"
-#include "../src/SafeQueue.hpp"
+#include "../../SafeQueue.hpp"
+#include "../../plazza/Pizza.hpp"
 
 namespace plazza {
 
 class Ingredients {
  public:
-
     Ingredients() = default;
     ~Ingredients() = default;
 
@@ -55,21 +54,27 @@ class Kitchen {
     void cook();
     bool isOpen() const;
     bool decrementIngredients(const plazza::Pizza &pizza);
+
     SafeQueue<plazza::Pizza> &getPizzasToCook() {
         return _pizzasToCook;
     }
+
     SafeQueue<plazza::Pizza> &getPizzasCooked() {
         return _pizzasCooked;
     }
+
     unsigned int getCookingMultiplier() const {
         return _cookingMultiplier;
     }
+
     unsigned int getCookNb() const {
         return _cookNb;
     }
+
     unsigned int getRestockTime() const {
         return _restockTime;
     }
+
     std::string getKitchenName() const {
         return _kitchenName;
     }

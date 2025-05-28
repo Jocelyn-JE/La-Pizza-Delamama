@@ -17,9 +17,18 @@ plazza::CLI::CLI(
     : _reception(cookingMultiplier, cookNb, restockTime) {}
 
 void plazza::CLI::runInterface() {
+    std::cout << "Welcome to Plazza! Type 'help' for available commands."
+              << std::endl;
+
     while (true) {
         printPrompt();
         std::getline(std::cin, _lastInput);
+
+        if (std::cin.eof()) {
+            std::cout << std::endl << "Bye" << std::endl;
+            break;
+        }
+
         handleInput(_lastInput);
     }
 }
@@ -29,15 +38,21 @@ void plazza::CLI::printPrompt() {
 }
 
 void plazza::CLI::handleInput(const std::string &input) {
+    if (input.empty()) {
+        return;
+    }
+
     if (input == _exitCommand) {
         handleExit();
     } else if (input == _helpCommand) {
         handleHelp();
     } else if (input == _statusCommand) {
         handleStatus();
-    } else if (_reception.processOrder(utils::toLower(input)) == false) {
-        std::cout << "Invalid order: " << input << std::endl;
-        std::cout << "Type 'help' for more information." << std::endl;
+    } else {
+        if (_reception.processOrder(utils::toLower(input)) == false) {
+            std::cout << "Invalid order: " << input << std::endl;
+            std::cout << "Type 'help' for more information." << std::endl;
+        }
     }
 }
 
@@ -47,7 +62,7 @@ void plazza::CLI::handleExit() {
 }
 
 void plazza::CLI::handleStatus() {
-    std::cout << "To be implemented." << std::endl;
+    _reception.displayStatus();
 }
 
 void plazza::CLI::handleHelp() {
@@ -57,8 +72,6 @@ void plazza::CLI::handleHelp() {
 std::string plazza::CLI::getLastInput() const {
     return _lastInput;
 }
-
-// CLIException
 
 plazza::CLI::CLIException::CLIException(const std::string &errmsg)
     : _errmsg(errmsg) {}

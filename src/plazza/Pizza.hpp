@@ -7,9 +7,9 @@
 
 #ifndef SRC_PLAZZA_PIZZA_HPP_
 #define SRC_PLAZZA_PIZZA_HPP_
+#include <ctime>
 #include <string>
 #include <unordered_set>
-#include <ctime>
 
 namespace plazza {
 static const std::unordered_set<std::string> validPizzaTypes = {
@@ -35,6 +35,7 @@ class Pizza {
         XL = 8,
         XXL = 16
     };
+
     std::time_t getPizzaTime() const;
 
     Pizza();
@@ -42,6 +43,51 @@ class Pizza {
     ~Pizza() = default;
     PizzaType getType() const;
     PizzaSize getSize() const;
+
+    std::string toString() const {
+        std::string typeStr, sizeStr;
+
+        switch (_type) {
+            case Regina:
+                typeStr = "Regina";
+                break;
+            case Margarita:
+                typeStr = "Margarita";
+                break;
+            case Americana:
+                typeStr = "Americana";
+                break;
+            case Fantasia:
+                typeStr = "Fantasia";
+                break;
+            default:
+                typeStr = "Unknown";
+                break;
+        }
+
+        switch (_size) {
+            case S:
+                sizeStr = "S";
+                break;
+            case M:
+                sizeStr = "M";
+                break;
+            case L:
+                sizeStr = "L";
+                break;
+            case XL:
+                sizeStr = "XL";
+                break;
+            case XXL:
+                sizeStr = "XXL";
+                break;
+            default:
+                sizeStr = "Unknown";
+                break;
+        }
+
+        return typeStr + " " + sizeStr;
+    }
 
  private:
     PizzaType _type;

@@ -6,12 +6,13 @@
 */
 
 #include "Kitchen.hpp"
-#include "./cook/Cook.hpp"
 
 #include <iostream>
 
+#include "./cook/Cook.hpp"
+
 static void cookThread(plazza::Cook cook) {
-    cook.cook(); // Start cooking process in the cook thread
+    cook.cook();  // Start cooking process in the cook thread
 }
 
 namespace plazza {
@@ -40,25 +41,27 @@ bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
     _ingredientsMutex.lock();
     if (!this->_kitchenOpen) {
         _ingredientsMutex.unlock();
-        return false; // Kitchen is closed, cannot decrement ingredients
+        return false;  // Kitchen is closed, cannot decrement ingredients
     }
     switch (pizza.getType()) {
         case plazza::Pizza::Margarita:
-            if (this->_ingredients.dough < 1 || this->_ingredients.tomato < 1
-                || this->_ingredients.gruyere < 1) {
+            if (this->_ingredients.dough < 1 ||
+                this->_ingredients.tomato < 1 ||
+                this->_ingredients.gruyere < 1) {
                 _ingredientsMutex.unlock();
-                return false; // Not enough ingredients
+                return false;  // Not enough ingredients
             }
             this->_ingredients.dough -= 1;
             this->_ingredients.tomato -= 1;
             this->_ingredients.gruyere -= 1;
             break;
         case plazza::Pizza::Regina:
-            if (this->_ingredients.dough < 1 || this->_ingredients.tomato < 1
-                || this->_ingredients.gruyere < 1 || this->_ingredients.ham < 1
-                || this->_ingredients.mushrooms < 1) {
+            if (this->_ingredients.dough < 1 ||
+                this->_ingredients.tomato < 1 ||
+                this->_ingredients.gruyere < 1 || this->_ingredients.ham < 1 ||
+                this->_ingredients.mushrooms < 1) {
                 _ingredientsMutex.unlock();
-                return false; // Not enough ingredients
+                return false;  // Not enough ingredients
             }
             this->_ingredients.dough -= 1;
             this->_ingredients.tomato -= 1;
@@ -67,10 +70,12 @@ bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
             this->_ingredients.mushrooms -= 1;
             break;
         case plazza::Pizza::Americana:
-            if (this->_ingredients.dough < 1 || this->_ingredients.tomato < 1
-                || this->_ingredients.gruyere < 1 || this->_ingredients.steak < 1) {
+            if (this->_ingredients.dough < 1 ||
+                this->_ingredients.tomato < 1 ||
+                this->_ingredients.gruyere < 1 ||
+                this->_ingredients.steak < 1) {
                 _ingredientsMutex.unlock();
-                return false; // Not enough ingredients
+                return false;  // Not enough ingredients
             }
             this->_ingredients.dough -= 1;
             this->_ingredients.tomato -= 1;
@@ -78,11 +83,13 @@ bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
             this->_ingredients.steak -= 1;
             break;
         case plazza::Pizza::Fantasia:
-            if (this->_ingredients.dough < 1 || this->_ingredients.tomato < 1
-                || this->_ingredients.gruyere < 1 || this->_ingredients.eggplant < 1
-                || this->_ingredients.goatCheese < 1) {
+            if (this->_ingredients.dough < 1 ||
+                this->_ingredients.tomato < 1 ||
+                this->_ingredients.gruyere < 1 ||
+                this->_ingredients.eggplant < 1 ||
+                this->_ingredients.goatCheese < 1) {
                 _ingredientsMutex.unlock();
-                return false; // Not enough ingredients
+                return false;  // Not enough ingredients
             }
             this->_ingredients.dough -= 1;
             this->_ingredients.tomato -= 1;
@@ -93,10 +100,10 @@ bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
             break;
         default:
             _ingredientsMutex.unlock();
-            return false; // Invalid pizza type
+            return false;  // Invalid pizza type
     }
     _ingredientsMutex.unlock();
-    return true; // Ingredients decremented successfully
+    return true;  // Ingredients decremented successfully
 }
 
 bool Kitchen::isOpen() const {
@@ -113,22 +120,25 @@ void Kitchen::cook() {
     for (unsigned int i = 0; i < this->_cookNb; ++i) {
         plazza::Cook cook(std::ref(*this));
         this->_cooks.emplace_back(cookThread, std::move(cook));
-        std::cout << "Cook " << i + 1 << " created for kitchen: "
-                  << this->_kitchenName << std::endl;
+        std::cout << "Cook " << i + 1
+                  << " created for kitchen: " << this->_kitchenName
+                  << std::endl;
     }
 
     while (1) {
         std::clock_t currentTime = std::clock();
         this->_timePassed = currentTime;
 
-        if (std::difftime(std::time(nullptr), this->_lastRestockTime) >= this->_restockTime/1000.0f) {
+        if (std::difftime(std::time(nullptr), this->_lastRestockTime) >=
+            this->_restockTime / 1000.0f) {
             this->_lastRestockTime = std::time(nullptr);
             this->_ingredients.restock();
             std::cout << "Restocking ingredients in kitchen: "
                       << this->_kitchenName << std::endl;
         }
         if (std::difftime(std::time(nullptr), this->_lastCookTime) >= 5) {
-            std::cout << "Closing kitchen: " << this->_kitchenName << std::endl;
+            std::cout << "Closing kitchen: " << this->_kitchenName
+                      << std::endl;
             break;
         }
         // if status received, print status
@@ -137,4 +147,4 @@ void Kitchen::cook() {
         // thread pool
     }
 }
-}
+}  // namespace plazza

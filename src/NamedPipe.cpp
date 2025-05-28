@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "plazza/Pizza.hpp"
+
 NamedPipe::NamedPipe(const std::string &pipePath) : _pipePath(pipePath) {
     if (!std::filesystem::is_fifo(_pipePath.c_str()) &&
         !std::filesystem::exists(_pipePath.c_str())) {
@@ -48,7 +50,7 @@ std::string NamedPipe::readString() {
     ssize_t bytesRead;
 
     do {
-        bytesRead = read(fd, buffer, sizeof(buffer) - 1);
+        bytesRead = ::read(fd, buffer, sizeof(buffer) - 1);
         if (bytesRead == -1) {
             tryClose(fd);
             throw std::runtime_error(
@@ -75,7 +77,7 @@ void NamedPipe::writeString(const std::string &data) {
     int fd = tryOpen(O_WRONLY);
     ssize_t bytesWritten;
 
-    bytesWritten = write(fd, data.c_str(), data.size());
+    bytesWritten = ::write(fd, data.c_str(), data.size());
     tryClose(fd);
     if (bytesWritten == -1) {
         throw std::runtime_error("Failed to write to named pipe: " +
@@ -83,8 +85,34 @@ void NamedPipe::writeString(const std::string &data) {
     }
 }
 
+bool NamedPipe::writePizza(const Pizza &pizza) {
+    struct PizzaData {
+        int type;
+        int size;
+    } data;
+
+    data.type = static_cast<int>(pizza.getType());
+    data.size = static_cast<int>(pizza.getSize());
+
+    return write(data);
+}
+
+bool NamedPipe::readPizza(Pizza &pizza) {
+    struct PizzaData {
+        int type;
+        int size;
+    } data;
+
+    if (read(data)) {
+        pizza = Pizza(static_cast<Pizza::PizzaType>(data.type),
+            static_cast<Pizza::PizzaSize>(data.size));
+        return true;
+    }
+    return false;
+}
+
 void NamedPipe::tryClose(int fd) const {
-    if (close(fd) == -1) {
+    if (::close(fd) == -1) {
         throw std::runtime_error(
             "Failed to close file descriptor: " + std::to_string(fd) + "\n" +
             strerror(errno) + "\n");
@@ -92,7 +120,7 @@ void NamedPipe::tryClose(int fd) const {
 }
 
 int NamedPipe::tryOpen(int mode) const {
-    int fd = open(_pipePath.c_str(), mode);
+    int fd = ::open(_pipePath.c_str(), mode);
 
     if (fd == -1) {
         throw std::runtime_error("Failed to open named pipe: " + _pipePath +
