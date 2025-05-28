@@ -11,31 +11,7 @@
 #include <iostream>
 
 static void cookThread(plazza::Cook cook) {
-    // cook.cook(); // Start cooking process in the cook thread
-    SafeQueue<plazza::Pizza> &pizzasToCook = cook.kitchen.getPizzasToCook();
-    SafeQueue<plazza::Pizza> &pizzasCooked = cook.kitchen.getPizzasCooked();
-    plazza::Pizza pizza;
-    cook.working = false;
-    while (cook.kitchen.isOpen()) {
-        if (pizzasToCook.tryPop(pizza)) {
-            if (cook.kitchen.decrementIngredients(pizza)) {
-                cook.working = true;
-            } else {
-                std::cout << "Not enough ingredients for pizza: "
-                          << pizza.getType() << " of size " << pizza.getSize()
-                          << std::endl;
-                continue; // Skip cooking if not enough ingredients
-            }
-            // Simulate cooking time based on pizza size and cooking multiplier
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                pizza.getPizzaTime() * cook.kitchen.getCookingMultiplier()));
-            pizzasCooked.push(pizza);
-            std::cout << "Pizza cooked: " << pizza.getType() << " of size "
-                      << pizza.getSize() << std::endl;
-        }
-        cook.working = false;
-    }
-    std::cout << "Cook thread finished for kitchen: " << cook.kitchen.getKitchenName() << std::endl;
+    cook.cook(); // Start cooking process in the cook thread
 }
 
 namespace plazza {
