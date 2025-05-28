@@ -22,7 +22,7 @@ class Cook {
 
         Cook(plazza::Kitchen &kitchen);
         void cook();
-        // void dump();
+        void dump();
 };
 }  // namespace plazza
 

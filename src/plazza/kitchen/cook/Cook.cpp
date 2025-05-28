@@ -43,6 +43,16 @@ namespace plazza {
             working = false;
         }
         std::cout << "Cook thread finished for kitchen: " << kitchen.getKitchenName() << std::endl;
+    }
+
+    void Cook::dump()
+    {
+        if (working) {
+            std::cout << "Cook is currently working on pizza: "
+                      << pizza.getType() << " of size " << pizza.getSize() << std::endl;
+        } else {
+            std::cout << "Cook is waiting." << std::endl;
         }
+    }
 
 } // namespace plazza

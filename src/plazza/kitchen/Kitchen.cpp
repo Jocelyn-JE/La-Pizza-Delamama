@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-static void cookThread(plazza::Cook cook) {
+static void cookThread(plazza::Cook &cook) {
     cook.cook(); // Start cooking process in the cook thread
 }
 
