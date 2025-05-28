@@ -9,6 +9,7 @@
 #define SRC_PLAZZA_PIZZA_HPP_
 #include <string>
 #include <unordered_set>
+#include <ctime>
 
 namespace plazza {
 static const std::unordered_set<std::string> validPizzaTypes = {
@@ -19,7 +20,7 @@ static const std::unordered_set<std::string> validPizzaSizes = {
 class Pizza {
  public:
     enum PizzaType {
-        NONE = 0,
+        NONE_TYPE = 0,
         Regina = 1,
         Margarita = 2,
         Americana = 4,
@@ -27,7 +28,7 @@ class Pizza {
     };
 
     enum PizzaSize {
-        NONE = 0,
+        NONE_SIZE = 0,
         S = 1,
         M = 2,
         L = 4,
@@ -35,7 +36,7 @@ class Pizza {
         XXL = 16
     };
     std::time_t getPizzaTime() const {
-        if (_type == PizzaType::NONE || _size == PizzaSize::NONE) {
+        if (_type == PizzaType::NONE_TYPE || _size == PizzaSize::NONE_SIZE) {
             return 0;  // Invalid pizza
         }
         if (_type == PizzaType::Regina) {
@@ -50,8 +51,8 @@ class Pizza {
     }
 
     Pizza() {
-        _type = PizzaType::NONE;      // Default type
-        _size = PizzaSize::NONE;      // Default size
+        _type = PizzaType::NONE_TYPE;      // Default type
+        _size = PizzaSize::NONE_SIZE;      // Default size
     }
     Pizza(PizzaType type, PizzaSize size);
     ~Pizza() = default;

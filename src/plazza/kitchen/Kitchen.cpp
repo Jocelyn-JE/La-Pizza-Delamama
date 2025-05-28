@@ -30,7 +30,6 @@ static void cookThread(plazza::Kitchen &kitchen) {
             pizzasCooked.push(pizza);
             std::cout << "Pizza cooked: " << pizza.getType() << " of size "
                       << pizza.getSize() << std::endl;
-            pizzasCooked.push(pizza);
         }
         hasPizza = false;
     }
