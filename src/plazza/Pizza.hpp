@@ -7,9 +7,9 @@
 
 #ifndef SRC_PLAZZA_PIZZA_HPP_
 #define SRC_PLAZZA_PIZZA_HPP_
+#include <ctime>
 #include <string>
 #include <unordered_set>
-#include <ctime>
 
 namespace plazza {
 static const std::unordered_set<std::string> validPizzaTypes = {
@@ -35,6 +35,7 @@ class Pizza {
         XL = 8,
         XXL = 16
     };
+
     std::time_t getPizzaTime() const;
 
     Pizza();

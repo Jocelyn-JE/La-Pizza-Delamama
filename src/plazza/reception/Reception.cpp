@@ -25,7 +25,7 @@ plazza::Reception::Reception(
 
 bool plazza::Reception::processOrder(const std::string &order) {
     std::vector<std::string> pizzaOrders =
-        utils::split(order, "; ");  // TODO SPLIT AND TRIM
+        utils::split(order, "; ");  // TODO(Samuel) SPLIT AND TRIM
 
     for (auto pizza : pizzaOrders) {
         if (pizza.empty()) {

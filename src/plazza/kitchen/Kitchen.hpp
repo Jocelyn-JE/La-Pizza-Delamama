@@ -5,8 +5,8 @@
 ** Kitchen
 */
 
-#ifndef KITCHEN_HPP_
-#define KITCHEN_HPP_
+#ifndef SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
+#define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 
 #include <ctime>
 #include <string>
@@ -15,12 +15,12 @@
 
 #include "../Pizza.hpp"
 #include "../src/SafeQueue.hpp"
+#include "plazza/Pizza.hpp"
 
 namespace plazza {
 
 class Ingredients {
  public:
-
     Ingredients() = default;
     ~Ingredients() = default;
 
@@ -55,21 +55,27 @@ class Kitchen {
     void cook();
     bool isOpen() const;
     bool decrementIngredients(const plazza::Pizza &pizza);
+
     SafeQueue<plazza::Pizza> &getPizzasToCook() {
         return _pizzasToCook;
     }
+
     SafeQueue<plazza::Pizza> &getPizzasCooked() {
         return _pizzasCooked;
     }
+
     unsigned int getCookingMultiplier() const {
         return _cookingMultiplier;
     }
+
     unsigned int getCookNb() const {
         return _cookNb;
     }
+
     unsigned int getRestockTime() const {
         return _restockTime;
     }
+
     std::string getKitchenName() const {
         return _kitchenName;
     }
@@ -95,4 +101,4 @@ class Kitchen {
 };
 }  // namespace plazza
 
-#endif /* !KITCHEN_HPP_ */
+#endif  // SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
