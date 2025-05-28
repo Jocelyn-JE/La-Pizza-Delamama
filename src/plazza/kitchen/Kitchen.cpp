@@ -8,10 +8,12 @@
 #include "Kitchen.hpp"
 
 #include <iostream>
+#include <string>
+#include <utility>
 
 #include "./cook/Cook.hpp"
 
-static void cookThread(plazza::Cook cook) {
+static void cookThread(plazza::Cook &cook) {
     cook.cook();  // Start cooking process in the cook thread
 }
 
@@ -119,7 +121,7 @@ void Kitchen::cook() {
 
     for (unsigned int i = 0; i < this->_cookNb; ++i) {
         plazza::Cook cook(std::ref(*this));
-        this->_cooks.emplace_back(cookThread, std::move(cook));
+        this->_cooks.emplace_back(cookThread, std::ref(cook));
         std::cout << "Cook " << i + 1
                   << " created for kitchen: " << this->_kitchenName
                   << std::endl;
