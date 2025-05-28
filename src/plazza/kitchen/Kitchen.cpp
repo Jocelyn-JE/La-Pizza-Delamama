@@ -23,7 +23,7 @@ Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
     : _cookingMultiplier(cookingMultiplier),
       _cookNb(cookNb),
       _restockTime(restockTime),
-      _kitchenName(kitchenName),
+      _kitchenPipe(kitchenPipe),
       _kitchenOpen(true) {}
 
 Kitchen::~Kitchen() {
@@ -118,14 +118,13 @@ void Kitchen::cook() {
     this->_lastCookTime = std::time(nullptr);
     this->_lastRestockTime = std::time(nullptr);
     std::cout << "Create the " << this->_cookNb
-              << " cooks for kitchen: " << this->_kitchenName << std::endl;
+              << " cooks for kitchen: " << getKitchenName() << std::endl;
 
     for (unsigned int i = 0; i < this->_cookNb; ++i) {
         plazza::Cook cook(std::ref(*this));
         this->_cooks.emplace_back(cookThread, std::ref(cook));
         std::cout << "Cook " << i + 1
-                  << " created for kitchen: " << this->_kitchenName
-                  << std::endl;
+                  << " created for kitchen: " << getKitchenName() << std::endl;
     }
 
     while (1) {
@@ -140,8 +139,7 @@ void Kitchen::cook() {
                       << this->_kitchenPipe.getPipePath() << std::endl;
         }
         if (std::difftime(std::time(nullptr), this->_lastCookTime) >= 5) {
-            std::cout << "Closing kitchen: " << this->_kitchenName
-                      << std::endl;
+            std::cout << "Closing kitchen: " << getKitchenName() << std::endl;
             break;
         }
         // if status received, print status
