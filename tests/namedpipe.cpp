@@ -7,6 +7,7 @@
 
 #include <criterion/criterion.h>
 #include <criterion/redirect.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -32,7 +33,7 @@ Test(factory_tests, create_input, .init = cr_redirect_stdout) {
         std::cout << "Child: " << pipe.getPipePath() << std::endl;
         for (int i = 0; i < 2; i++) {
             try {
-                std::string data = pipe.readString();
+                std::string data = pipe.readString(O_RDONLY);
                 std::cout << "Child received: " << data << std::endl;
                 pipe.writeString("Hello back from child! ");
                 pipe.writeString("This is a response string. ");
@@ -50,7 +51,7 @@ Test(factory_tests, create_input, .init = cr_redirect_stdout) {
                 pipe.writeString("Hello from parent! ");
                 pipe.writeString("This is a test string. ");
                 pipe.writeString("end of string is here\n");
-                std::string response = pipe.readString();
+                std::string response = pipe.readString(O_RDONLY);
                 std::cout << "Parent received: " << response << std::endl;
             } catch (const std::runtime_error &e) {
                 std::cerr << "Error in parent: " << e.what() << std::endl;

@@ -15,7 +15,7 @@ class NamedPipe {
     ~NamedPipe() noexcept(false);
     operator const char *() const;
     const std::string &getPipePath() const;
-    std::string readString();
+    std::string readString(const int mode);
     void writeString(const std::string &data);
 
  protected:

@@ -42,8 +42,8 @@ const std::string &NamedPipe::getPipePath() const {
     return _pipePath;
 }
 
-std::string NamedPipe::readString() {
-    int fd = tryOpen(O_RDONLY);
+std::string NamedPipe::readString(const int mode) {
+    int fd = tryOpen(mode);
     char buffer[BUFSIZ];
     ssize_t bytesRead = 0;
 
@@ -57,7 +57,7 @@ std::string NamedPipe::readString() {
         }
         buffer[bytesRead] = '\0';
         _readBuffer += buffer;
-    } while (_readBuffer.find('\n') == std::string::npos && bytesRead != 0);
+    } while (_readBuffer.find('\n') == std::string::npos);
     tryClose(fd);
     return getLineFromReadBuffer();
 }

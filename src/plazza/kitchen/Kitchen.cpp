@@ -6,6 +6,7 @@
 */
 
 #include "Kitchen.hpp"
+#include <fcntl.h>
 
 #include <iostream>
 #include <string>
@@ -129,7 +130,8 @@ void Kitchen::cook() {
     while (1) {
         std::clock_t currentTime = std::clock();
         this->_timePassed = currentTime;
-        std::string order = this->_kitchenPipe.readString();
+        std::string order =
+            this->_kitchenPipe.readString(O_RDONLY | O_NONBLOCK);
         if (!order.empty()) {
             std::cout << "Received order in kitchen: " << getKitchenName()
                       << " - Order: " << order << std::endl;
