@@ -7,12 +7,14 @@
 
 #include "NamedPipe.hpp"
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -32,6 +34,8 @@ NamedPipe::~NamedPipe() noexcept(false) {
         throw std::runtime_error("Failed to remove named pipe: " + _pipePath +
                                  "\n" + strerror(errno) + "\n");
     }
+    if (_fd != -1)
+        tryClose(_fd);
 }
 
 NamedPipe::operator const char *() const {
@@ -43,22 +47,22 @@ const std::string &NamedPipe::getPipePath() const {
 }
 
 std::string NamedPipe::readString(const int mode) {
-    int fd = tryOpen(mode);
+    if (_fd == -1)
+        _fd = tryOpen(mode);
     char buffer[BUFSIZ];
     ssize_t bytesRead = 0;
 
     do {
-        bytesRead = read(fd, buffer, sizeof(buffer) - 1);
+        bytesRead = read(_fd, buffer, sizeof(buffer) - 1);
         if (bytesRead == -1) {
-            tryClose(fd);
+            tryClose(_fd);
             throw std::runtime_error(
                 "Failed to read from named pipe: " + _pipePath + "\n" +
                 strerror(errno) + "\n");
         }
         buffer[bytesRead] = '\0';
         _readBuffer += buffer;
-    } while (_readBuffer.find('\n') == std::string::npos);
-    tryClose(fd);
+    } while (_readBuffer.find('\n') == std::string::npos && bytesRead > 0);
     return getLineFromReadBuffer();
 }
 
@@ -72,10 +76,22 @@ std::string NamedPipe::getLineFromReadBuffer() {
 }
 
 void NamedPipe::writeString(const std::string &data) {
+    std::cout << "Writing to named pipe: " << _pipePath << std::endl;
     int fd = tryOpen(O_WRONLY);
+    std::cout << "Opened named pipe for writing: " << _pipePath << std::endl;
     ssize_t bytesWritten;
+    struct pollfd pollFd = {fd, POLLOUT, 0};
 
+    std::cout << "Polling named pipe: " << _pipePath << std::endl;
+    if (poll(&pollFd, 1, -1) == -1) {
+        tryClose(fd);
+        throw std::runtime_error("Failed to poll named pipe: " + _pipePath +
+                                 "\n" + strerror(errno) + "\n");
+    }
+    sleep(1);
+    std::cout << "Polling successful, writing data: " << data << std::endl;
     bytesWritten = write(fd, data.c_str(), data.size());
+    std::cout << "Bytes written: " << bytesWritten << std::endl;
     tryClose(fd);
     if (bytesWritten == -1) {
         throw std::runtime_error("Failed to write to named pipe: " +
