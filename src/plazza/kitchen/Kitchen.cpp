@@ -130,7 +130,11 @@ void Kitchen::cook() {
     while (1) {
         std::clock_t currentTime = std::clock();
         this->_timePassed = currentTime;
-
+        std::string order = this->_kitchenPipe.readString();
+        if (!order.empty()) {
+            std::cout << "Received order in kitchen: " << getKitchenName()
+                      << " - Order: " << order << std::endl;
+        }
         if (std::difftime(std::time(nullptr), this->_lastRestockTime) >=
             this->_restockTime / 1000.0f) {
             this->_lastRestockTime = std::time(nullptr);

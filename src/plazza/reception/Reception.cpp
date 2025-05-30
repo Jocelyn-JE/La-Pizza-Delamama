@@ -45,7 +45,7 @@ void plazza::Reception::sendPizzaToKitchen(const std::string &pizza) {
         createNewKitchen();
     std::cout << "Sending pizza to kitchen: "
               << _kitchenPipes.back().getPipePath() << std::endl;
-    _kitchenPipes.back().writeString(pizza);
+    _kitchenPipes.back().writeString(pizza + "\n");
     std::cout << "Sent pizza to kitchen: " << pizza << std::endl;
 }
 
