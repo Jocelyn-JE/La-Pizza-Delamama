@@ -261,9 +261,8 @@ void plazza::Reception::runKitchenProcess(unsigned int kitchenId,
     std::cerr << "DEBUG: Kitchen " << kitchenId
               << " starting runKitchenProcess" << std::endl;
 
-    plazza::Kitchen kitchen(static_cast<unsigned int>(_cookingMultiplier),
-        _cookNb, _restockTime, "Kitchen_" + std::to_string(kitchenId));
-
+    plazza::Kitchen kitchen(_cookingMultiplier, _cookNb, _restockTime,
+        "Kitchen_" + std::to_string(kitchenId));
     std::cerr << "DEBUG: Kitchen " << kitchenId << " created Kitchen object"
               << std::endl;
 
@@ -376,8 +375,8 @@ void plazza::Reception::runKitchenProcess(unsigned int kitchenId,
 
         bool hasWork = (kitchen.getCurrentLoad() > 0);
 
-        if (duration.count() >= 5 && !hasWork) {
-            std::cout << "Kitchen " << kitchenId
+        if (!hasWork && duration.count() >= 5) {
+            std::cerr << "Kitchen " << kitchenId
                       << " closing due to inactivity (no work for 5 seconds)"
                       << std::endl;
             running = false;

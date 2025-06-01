@@ -1,12 +1,14 @@
 #include "Kitchen.hpp"
-#include "cook/Cook.hpp"
+
 #include <chrono>
 #include <iostream>
 #include <thread>
 
+#include "cook/Cook.hpp"
+
 namespace plazza {
 
-Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
+Kitchen::Kitchen(double cookingMultiplier, unsigned int cookNb,
     unsigned int restockTime, std::string kitchenName)
     : _cookingMultiplier(cookingMultiplier),
       _cookNb(cookNb),
@@ -17,7 +19,8 @@ Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
 
     for (unsigned int i = 0; i < _cookNb; ++i) {
         _cookMutexes.emplace_back(std::make_unique<std::mutex>());
-        _cooks.emplace_back(std::make_unique<Cook>(*this, i, *_cookMutexes.back()));
+        _cooks.emplace_back(
+            std::make_unique<Cook>(*this, i, *_cookMutexes.back()));
         _cooks.back()->start();
     }
 
@@ -31,7 +34,7 @@ Kitchen::~Kitchen() {
     _running = false;
     _kitchenOpen = false;
 
-    for (auto& cook : _cooks) {
+    for (auto &cook : _cooks) {
         cook->stop();
     }
 
@@ -43,10 +46,8 @@ Kitchen::~Kitchen() {
 }
 
 bool Kitchen::assignPizzaToCook(const plazza::Pizza &pizza) {
-    for (auto& cook : _cooks) {
-        std::lock_guard<std::mutex> lock(*_cookMutexes[cook->getId()]);
-        if (cook->getState().canAcceptPizza()) {
-            cook->assignPizza(pizza);
+    for (auto &cook : _cooks) {
+        if (cook->tryAssignPizza(pizza)) {
             return true;
         }
     }
@@ -55,7 +56,7 @@ bool Kitchen::assignPizzaToCook(const plazza::Pizza &pizza) {
 
 unsigned int Kitchen::getCurrentLoad() const {
     unsigned int totalLoad = 0;
-    for (const auto& cook : _cooks) {
+    for (const auto &cook : _cooks) {
         totalLoad += cook->getState().getCurrentLoad();
     }
     return totalLoad;
@@ -66,7 +67,7 @@ KitchenStatus Kitchen::getCurrentStatus() const {
     status.busyCooks = 0;
     status.queueSize = 0;
 
-    for (const auto& cook : _cooks) {
+    for (const auto &cook : _cooks) {
         auto cookState = cook->getState();
         if (cookState.isCooking) {
             status.busyCooks++;
@@ -142,7 +143,7 @@ bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
 
 void Kitchen::restockWorker() {
     while (_running && _kitchenOpen) {
-        std::this_thread::sleep_for(std::chrono::seconds(_restockTime));
+        std::this_thread::sleep_for(std::chrono::milliseconds(_restockTime));
 
         if (_running && _kitchenOpen) {
             std::lock_guard<std::mutex> lock(_ingredientsMutex);

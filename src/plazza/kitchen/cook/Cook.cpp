@@ -6,12 +6,14 @@
 */
 
 #include "Cook.hpp"
+
 #include <iostream>
+
 #include "../Kitchen.hpp"
 
 namespace plazza {
 
-Cook::Cook(Kitchen& kitchen, unsigned int id, std::mutex& mutex)
+Cook::Cook(Kitchen &kitchen, unsigned int id, std::mutex &mutex)
     : _kitchen(kitchen), _id(id), _mutex(mutex), _running(false) {}
 
 Cook::~Cook() {
@@ -30,7 +32,25 @@ void Cook::stop() {
     }
 }
 
-void Cook::assignPizza(const plazza::Pizza& pizza) {
+bool Cook::tryAssignPizza(const plazza::Pizza &pizza) {
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (!_state.canAcceptPizza()) {
+        return false;
+    }
+
+    if (!_state.isCooking) {
+        _state.currentPizza = pizza;
+        _state.isCooking = true;
+    } else {
+        _state.queuedPizza = pizza;
+        _state.hasQueued = true;
+    }
+
+    return true;
+}
+
+void Cook::assignPizza(const plazza::Pizza &pizza) {
     std::lock_guard<std::mutex> lock(_mutex);
     if (!_state.isCooking) {
         _state.currentPizza = pizza;
@@ -52,7 +72,8 @@ unsigned int Cook::getId() const {
 
 void Cook::worker() {
     while (_running && _kitchen.isOpen()) {
-        plazza::Pizza pizzaToCook(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+        plazza::Pizza pizzaToCook(
+            plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
         bool hasPizza = false;
 
         {
@@ -65,21 +86,37 @@ void Cook::worker() {
 
         if (hasPizza) {
             if (_kitchen.decrementIngredients(pizzaToCook)) {
-                unsigned int cookTime = pizzaToCook.getPizzaTime() * _kitchen.getCookingMultiplier();
-                std::this_thread::sleep_for(std::chrono::milliseconds(cookTime));
+                unsigned int cookTime = pizzaToCook.getPizzaTime() *
+                                        _kitchen.getCookingMultiplier();
+
+                std::cerr << "Cook " << _id << " cooking "
+                          << pizzaToCook.toString() << " for " << cookTime
+                          << "ms" << std::endl;
+
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(cookTime));
+
+                std::cerr << "Cook " << _id << " finished cooking "
+                          << pizzaToCook.toString() << std::endl;
 
                 {
                     std::lock_guard<std::mutex> lock(_mutex);
                     if (_state.hasQueued) {
                         _state.currentPizza = _state.queuedPizza;
-                        _state.queuedPizza = plazza::Pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+                        _state.queuedPizza =
+                            plazza::Pizza(plazza::Pizza::NONE_TYPE,
+                                plazza::Pizza::NONE_SIZE);
                         _state.hasQueued = false;
                     } else {
                         _state.isCooking = false;
-                        _state.currentPizza = plazza::Pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+                        _state.currentPizza =
+                            plazza::Pizza(plazza::Pizza::NONE_TYPE,
+                                plazza::Pizza::NONE_SIZE);
                     }
                 }
             } else {
+                std::cerr << "Cook " << _id << " waiting for ingredients for "
+                          << pizzaToCook.toString() << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         } else {
@@ -87,5 +124,4 @@ void Cook::worker() {
         }
     }
 }
-
 }  // namespace plazza

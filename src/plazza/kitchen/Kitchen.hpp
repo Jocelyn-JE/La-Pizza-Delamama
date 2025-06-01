@@ -22,6 +22,7 @@
 namespace plazza {
 
 class Cook;
+
 class Ingredients {
  public:
     Ingredients() = default;
@@ -97,7 +98,7 @@ class CookState {
 
 class Kitchen {
  public:
-    Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
+    Kitchen(double cookingMultiplier, unsigned int cookNb,
         unsigned int restockTime, std::string kitchenName);
     ~Kitchen();
 
@@ -109,7 +110,7 @@ class Kitchen {
         return _kitchenOpen;
     }
 
-    unsigned int getCookingMultiplier() const {
+    double getCookingMultiplier() const {
         return _cookingMultiplier;
     }
 
@@ -130,7 +131,7 @@ class Kitchen {
  private:
     void restockWorker();
 
-    unsigned int _cookingMultiplier;
+    double _cookingMultiplier;
     unsigned int _cookNb;
     unsigned int _restockTime;
     std::string _kitchenName;
