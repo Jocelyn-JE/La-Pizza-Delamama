@@ -21,6 +21,7 @@
 
 namespace plazza {
 
+class Cook;
 class Ingredients {
  public:
     Ingredients() = default;
@@ -124,29 +125,26 @@ class Kitchen {
         return _kitchenName;
     }
 
- private:
-    void startCookThread(unsigned int cookId);
-    void cookWorker(unsigned int cookId);
     bool decrementIngredients(const plazza::Pizza &pizza);
+
+ private:
+    void restockWorker();
 
     unsigned int _cookingMultiplier;
     unsigned int _cookNb;
     unsigned int _restockTime;
     std::string _kitchenName;
 
-    std::vector<std::thread> _cookThreads;
-    std::vector<CookState> _cookStates;
+    std::vector<std::unique_ptr<Cook>> _cooks;
     std::vector<std::unique_ptr<std::mutex>> _cookMutexes;
 
     Ingredients _ingredients;
     mutable std::mutex _ingredientsMutex;
-    mutable std::mutex _statusMutex;
 
     std::atomic<bool> _kitchenOpen{true};
     std::atomic<bool> _running{true};
 
     std::thread _restockThread;
-    void restockWorker();
 };
 
 }  // namespace plazza

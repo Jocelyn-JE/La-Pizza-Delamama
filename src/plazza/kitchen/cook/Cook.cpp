@@ -6,59 +6,85 @@
 */
 
 #include "Cook.hpp"
-
-#include <chrono>
 #include <iostream>
-#include <thread>
-
-#include "../../../SafeQueue.hpp"
 #include "../Kitchen.hpp"
 
 namespace plazza {
 
-Cook::Cook(plazza::Kitchen &kitchen)
-    : kitchen(kitchen),
-      working(false),
-      pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE) {}
+Cook::Cook(Kitchen& kitchen, unsigned int id, std::mutex& mutex)
+    : _kitchen(kitchen), _id(id), _mutex(mutex), _running(false) {}
 
-void plazza::Cook::cook() {
-    SafeQueue<plazza::Pizza> &pizzasToCook = kitchen.getPizzasToCook();
-    SafeQueue<plazza::Pizza> &pizzasCooked = kitchen.getPizzasCooked();
-    plazza::Pizza pizza;
-    working = false;
-    while (kitchen.isOpen()) {
-        if (pizzasToCook.tryPop(pizza)) {
-            if (kitchen.decrementIngredients(pizza)) {
-                working = true;
-                kitchen.incrementBusyCooks();
-            } else {
-                std::cout << "Not enough ingredients for pizza: "
-                          << pizza.getType() << " of size " << pizza.getSize()
-                          << std::endl;
-                continue;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                pizza.getPizzaTime() * kitchen.getCookingMultiplier()));
-
-            pizzasCooked.push(pizza);
-            std::cout << "Pizza cooked: " << pizza.getType() << " of size "
-                      << pizza.getSize() << std::endl;
-
-            kitchen.decrementBusyCooks();
-        }
-        working = false;
-    }
-    std::cout << "Cook thread finished for kitchen: "
-              << kitchen.getKitchenName() << std::endl;
+Cook::~Cook() {
+    stop();
 }
 
-void Cook::dump() {
-    if (working) {
-        std::cout << "Cook is currently working on pizza: " << pizza.getTypeString()
-                  << " of size " << pizza.getSizeString() << std::endl;
+void Cook::start() {
+    _running = true;
+    _thread = std::thread(&Cook::worker, this);
+}
+
+void Cook::stop() {
+    _running = false;
+    if (_thread.joinable()) {
+        _thread.join();
+    }
+}
+
+void Cook::assignPizza(const plazza::Pizza& pizza) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (!_state.isCooking) {
+        _state.currentPizza = pizza;
+        _state.isCooking = true;
     } else {
-        std::cout << "Cook is waiting." << std::endl;
+        _state.queuedPizza = pizza;
+        _state.hasQueued = true;
+    }
+}
+
+Cook::State Cook::getState() const {
+    std::lock_guard<std::mutex> lock(_mutex);
+    return _state;
+}
+
+unsigned int Cook::getId() const {
+    return _id;
+}
+
+void Cook::worker() {
+    while (_running && _kitchen.isOpen()) {
+        plazza::Pizza pizzaToCook(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+        bool hasPizza = false;
+
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            if (_state.isCooking) {
+                pizzaToCook = _state.currentPizza;
+                hasPizza = true;
+            }
+        }
+
+        if (hasPizza) {
+            if (_kitchen.decrementIngredients(pizzaToCook)) {
+                unsigned int cookTime = pizzaToCook.getPizzaTime() * _kitchen.getCookingMultiplier();
+                std::this_thread::sleep_for(std::chrono::milliseconds(cookTime));
+
+                {
+                    std::lock_guard<std::mutex> lock(_mutex);
+                    if (_state.hasQueued) {
+                        _state.currentPizza = _state.queuedPizza;
+                        _state.queuedPizza = plazza::Pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+                        _state.hasQueued = false;
+                    } else {
+                        _state.isCooking = false;
+                        _state.currentPizza = plazza::Pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+                    }
+                }
+            } else {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 }
 
