@@ -76,22 +76,17 @@ std::string NamedPipe::getLineFromReadBuffer() {
 }
 
 void NamedPipe::writeString(const std::string &data) {
-    std::cout << "Writing to named pipe: " << _pipePath << std::endl;
     int fd = tryOpen(O_WRONLY);
-    std::cout << "Opened named pipe for writing: " << _pipePath << std::endl;
     ssize_t bytesWritten;
     struct pollfd pollFd = {fd, POLLOUT, 0};
 
-    std::cout << "Polling named pipe: " << _pipePath << std::endl;
     if (poll(&pollFd, 1, -1) == -1) {
         tryClose(fd);
         throw std::runtime_error("Failed to poll named pipe: " + _pipePath +
                                  "\n" + strerror(errno) + "\n");
     }
     sleep(1);
-    std::cout << "Polling successful, writing data: " << data << std::endl;
     bytesWritten = write(fd, data.c_str(), data.size());
-    std::cout << "Bytes written: " << bytesWritten << std::endl;
     tryClose(fd);
     if (bytesWritten == -1) {
         throw std::runtime_error("Failed to write to named pipe: " +

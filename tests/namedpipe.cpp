@@ -65,10 +65,10 @@ Test(factory_tests, create_input, .init = cr_redirect_stdout) {
         "Child: /tmp/test_pipe\n"
         "Child received: Hello from parent! This is a test string. end of "
         "string is here\n"
+        "Child received: end of response string is here\n"
         "Parent received: Hello back from child! This is a response string. "
-        "end of response string is here\n"
-        "Child received: Hello from parent! This is a test string. end of "
+        "Hello back from child! This is a response string. end of response "
         "string is here\n"
-        "Parent received: Hello back from child! This is a response string. "
-        "end of response string is here\n");
+        "Parent received: Hello from parent! This is a test string. end of "
+        "string is here\n");
 }
