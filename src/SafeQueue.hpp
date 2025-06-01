@@ -30,6 +30,11 @@ class SafeQueue {
         _condVar.notify_one();
     }
 
+    size_t size() const {  // Made const
+        std::unique_lock<std::mutex> lock(_mutex);
+        return _queue.size();
+    }
+
     bool tryPop(T &value) {
         std::unique_lock<std::mutex> lock(_mutex);
         if (_queue.empty()) {
@@ -52,7 +57,7 @@ class SafeQueue {
 
  private:
     std::queue<T> _queue;
-    std::mutex _mutex;
+    mutable std::mutex _mutex;
     std::condition_variable _condVar;
 };
 

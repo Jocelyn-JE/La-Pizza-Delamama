@@ -8,7 +8,10 @@
 #ifndef SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 #define SRC_PLAZZA_KITCHEN_KITCHEN_HPP_
 
+#include <atomic>
 #include <ctime>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,26 +27,71 @@ class Ingredients {
     ~Ingredients() = default;
 
     void restock() {
-        dough += 1;
-        tomato += 1;
-        gruyere += 1;
-        ham += 1;
-        mushrooms += 1;
-        steak += 1;
-        eggplant += 1;
-        goatCheese += 1;
-        chiefLove += 1;
+        dough += 5;
+        tomato += 5;
+        gruyere += 5;
+        ham += 5;
+        mushrooms += 5;
+        steak += 5;
+        eggplant += 5;
+        goatCheese += 5;
+        chiefLove += 5;
     }
 
-    uint16_t dough = 0;
-    uint16_t tomato = 0;
-    uint16_t gruyere = 0;
-    uint16_t ham = 0;
-    uint16_t mushrooms = 0;
-    uint16_t steak = 0;
-    uint16_t eggplant = 0;
-    uint16_t goatCheese = 0;
-    uint16_t chiefLove = 0;
+    uint16_t dough = 5;
+    uint16_t tomato = 5;
+    uint16_t gruyere = 5;
+    uint16_t ham = 5;
+    uint16_t mushrooms = 5;
+    uint16_t steak = 5;
+    uint16_t eggplant = 5;
+    uint16_t goatCheese = 5;
+    uint16_t chiefLove = 5;
+};
+
+struct KitchenStatus {
+    unsigned int busyCooks;
+    unsigned int queueSize;
+    Ingredients ingredients;
+};
+
+class CookState {
+ public:
+    CookState()
+        : isCooking(false),
+          hasQueued(false),
+          currentPizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE),
+          queuedPizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE) {}
+
+    CookState(const CookState &) = delete;
+    CookState &operator=(const CookState &) = delete;
+
+    CookState(CookState &&other) noexcept
+        : isCooking(other.isCooking),
+          hasQueued(other.hasQueued),
+          currentPizza(std::move(other.currentPizza)),
+          queuedPizza(std::move(other.queuedPizza)) {
+        other.isCooking = false;
+        other.hasQueued = false;
+    }
+
+    bool isCooking;
+    bool hasQueued;
+    plazza::Pizza currentPizza;
+    plazza::Pizza queuedPizza;
+
+    bool canAcceptPizza() const {
+        return !isCooking || !hasQueued;
+    }
+
+    int getCurrentLoad() const {
+        int load = 0;
+        if (isCooking)
+            load++;
+        if (hasQueued)
+            load++;
+        return load;
+    }
 };
 
 class Kitchen {
@@ -51,16 +99,13 @@ class Kitchen {
     Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
         unsigned int restockTime, std::string kitchenName);
     ~Kitchen();
-    void cook();
-    bool isOpen() const;
-    bool decrementIngredients(const plazza::Pizza &pizza);
 
-    SafeQueue<plazza::Pizza> &getPizzasToCook() {
-        return _pizzasToCook;
-    }
+    bool assignPizzaToCook(const plazza::Pizza &pizza);
+    KitchenStatus getCurrentStatus() const;
+    unsigned int getCurrentLoad() const;
 
-    SafeQueue<plazza::Pizza> &getPizzasCooked() {
-        return _pizzasCooked;
+    bool isOpen() const {
+        return _kitchenOpen;
     }
 
     unsigned int getCookingMultiplier() const {
@@ -80,24 +125,30 @@ class Kitchen {
     }
 
  private:
+    void startCookThread(unsigned int cookId);
+    void cookWorker(unsigned int cookId);
+    bool decrementIngredients(const plazza::Pizza &pizza);
+
     unsigned int _cookingMultiplier;
     unsigned int _cookNb;
     unsigned int _restockTime;
     std::string _kitchenName;
 
-    std::clock_t _timePassed;
-    std::time_t _lastRestockTime;
-    std::time_t _lastCookTime;
-
-    std::vector<std::thread> _cooks;
-    SafeQueue<plazza::Pizza> _pizzasToCook;
-    SafeQueue<plazza::Pizza> _pizzasCooked;
+    std::vector<std::thread> _cookThreads;
+    std::vector<CookState> _cookStates;
+    std::vector<std::unique_ptr<std::mutex>> _cookMutexes;
 
     Ingredients _ingredients;
-    std::mutex _ingredientsMutex;
+    mutable std::mutex _ingredientsMutex;
+    mutable std::mutex _statusMutex;
 
-    bool _kitchenOpen;
+    std::atomic<bool> _kitchenOpen{true};
+    std::atomic<bool> _running{true};
+
+    std::thread _restockThread;
+    void restockWorker();
 };
+
 }  // namespace plazza
 
 #endif  // SRC_PLAZZA_KITCHEN_KITCHEN_HPP_

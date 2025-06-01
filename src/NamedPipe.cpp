@@ -6,6 +6,7 @@
 */
 
 #include "NamedPipe.hpp"
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,6 +14,7 @@
 
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -28,13 +30,7 @@ NamedPipe::NamedPipe(const std::string &pipePath) : _pipePath(pipePath) {
     }
 }
 
-NamedPipe::~NamedPipe() noexcept(false) {
-    if (std::filesystem::is_fifo(_pipePath.c_str()) &&
-        unlink(_pipePath.c_str()) == -1) {
-        throw std::runtime_error("Failed to remove named pipe: " + _pipePath +
-                                 "\n" + strerror(errno) + "\n");
-    }
-}
+NamedPipe::~NamedPipe() noexcept(false) {}
 
 NamedPipe::operator const char *() const {
     return _pipePath.c_str();
@@ -85,7 +81,7 @@ void NamedPipe::writeString(const std::string &data) {
     }
 }
 
-bool NamedPipe::writePizza(const Pizza &pizza) {
+bool NamedPipe::writePizza(const plazza::Pizza &pizza) {
     struct PizzaData {
         int type;
         int size;
@@ -94,18 +90,18 @@ bool NamedPipe::writePizza(const Pizza &pizza) {
     data.type = static_cast<int>(pizza.getType());
     data.size = static_cast<int>(pizza.getSize());
 
-    return write(data);
+    return writeData(data);
 }
 
-bool NamedPipe::readPizza(Pizza &pizza) {
+bool NamedPipe::readPizza(plazza::Pizza &pizza) {
     struct PizzaData {
         int type;
         int size;
     } data;
 
-    if (read(data)) {
-        pizza = Pizza(static_cast<Pizza::PizzaType>(data.type),
-            static_cast<Pizza::PizzaSize>(data.size));
+    if (readData(data)) {
+        pizza = plazza::Pizza(static_cast<plazza::Pizza::PizzaType>(data.type),
+            static_cast<plazza::Pizza::PizzaSize>(data.size));
         return true;
     }
     return false;

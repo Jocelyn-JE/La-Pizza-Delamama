@@ -7,10 +7,12 @@
 
 #include "Cook.hpp"
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
+#include "../../../SafeQueue.hpp"
 #include "../Kitchen.hpp"
-#include "../src/SafeQueue.hpp"
 
 namespace plazza {
 
@@ -19,7 +21,7 @@ Cook::Cook(plazza::Kitchen &kitchen)
       working(false),
       pizza(plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE) {}
 
-void Cook::cook() {
+void plazza::Cook::cook() {
     SafeQueue<plazza::Pizza> &pizzasToCook = kitchen.getPizzasToCook();
     SafeQueue<plazza::Pizza> &pizzasCooked = kitchen.getPizzasCooked();
     plazza::Pizza pizza;
@@ -28,18 +30,22 @@ void Cook::cook() {
         if (pizzasToCook.tryPop(pizza)) {
             if (kitchen.decrementIngredients(pizza)) {
                 working = true;
+                kitchen.incrementBusyCooks();
             } else {
                 std::cout << "Not enough ingredients for pizza: "
                           << pizza.getType() << " of size " << pizza.getSize()
                           << std::endl;
-                continue;  // Skip cooking if not enough ingredients
+                continue;
             }
-            // Simulate cooking time based on pizza size and cooking multiplier
+
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 pizza.getPizzaTime() * kitchen.getCookingMultiplier()));
+
             pizzasCooked.push(pizza);
             std::cout << "Pizza cooked: " << pizza.getType() << " of size "
                       << pizza.getSize() << std::endl;
+
+            kitchen.decrementBusyCooks();
         }
         working = false;
     }

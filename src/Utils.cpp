@@ -7,6 +7,7 @@
 
 #include "Utils.hpp"
 
+#include <cctype>
 #include <string>
 #include <vector>
 

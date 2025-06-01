@@ -33,16 +33,16 @@ class Reception {
     double _cookingMultiplier;
     unsigned int _cookNb;
     unsigned int _restockTime;
-    unsigned int _nextKitchenId;
+    std::atomic<unsigned int> _nextKitchenId{0};
     mutable std::mutex _kitchensMutex;
     std::vector<pid_t> _kitchenPids;
     std::unordered_map<unsigned int, std::pair<NamedPipe *, NamedPipe *>>
         _kitchenPipes;
-    std::atomic<bool> _running;
+    std::atomic<bool> _running{true};
     std::thread _resultCollectorThread;
 
     bool validatePizza(const std::string &pizza);
-    void createKitchen();
+    void createKitchen(unsigned int kitchenId);
     void runKitchenProcess(unsigned int kitchenId,
         const std::string &inPipePath, const std::string &outPipePath);
     void dispatchPizza(const Pizza &pizza);

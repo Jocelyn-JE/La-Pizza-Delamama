@@ -7,146 +7,249 @@
 
 #include "Kitchen.hpp"
 
+#include <chrono>
 #include <iostream>
-#include <string>
-#include <utility>
-
-#include "./cook/Cook.hpp"
-
-static void cookThread(plazza::Cook &cook) {
-    cook.cook();  // Start cooking process in the cook thread
-}
+#include <thread>
 
 namespace plazza {
+
 Kitchen::Kitchen(unsigned int cookingMultiplier, unsigned int cookNb,
     unsigned int restockTime, std::string kitchenName)
     : _cookingMultiplier(cookingMultiplier),
       _cookNb(cookNb),
       _restockTime(restockTime),
-      _kitchenName(kitchenName),
-      _kitchenOpen(true) {}
+      _kitchenName(kitchenName) {
+    _cookStates.reserve(_cookNb);
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        _cookStates.emplace_back();
+    }
+
+    _cookMutexes.reserve(_cookNb);
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        _cookMutexes.emplace_back(std::make_unique<std::mutex>());
+    }
+
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        startCookThread(i);
+    }
+
+    _restockThread = std::thread(&Kitchen::restockWorker, this);
+
+    std::cerr << "Kitchen " << _kitchenName << " initialized with " << _cookNb
+              << " cooks" << std::endl;
+}
 
 Kitchen::~Kitchen() {
-    for (auto &cook : _cooks) {
-        if (cook.joinable()) {
-            cook.join();
+    _running = false;
+    _kitchenOpen = false;
+
+    for (auto &thread : _cookThreads) {
+        if (thread.joinable()) {
+            thread.join();
         }
     }
-    std::cout << "Kitchen " << this->_kitchenName << " closed." << std::endl;
-    this->_cooks.clear();
-    this->_timePassed = 0;
-    this->_lastRestockTime = 0;
-    this->_lastCookTime = 0;
+
+    if (_restockThread.joinable()) {
+        _restockThread.join();
+    }
+
+    std::cerr << "Kitchen " << _kitchenName << " shut down" << std::endl;
+}
+
+void Kitchen::startCookThread(unsigned int cookId) {
+    _cookThreads.emplace_back(&Kitchen::cookWorker, this, cookId);
+}
+
+bool Kitchen::assignPizzaToCook(const plazza::Pizza &pizza) {
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        std::lock_guard<std::mutex> lock(*_cookMutexes[i]);
+
+        if (_cookStates[i].canAcceptPizza()) {
+            if (!_cookStates[i].isCooking) {
+                _cookStates[i].currentPizza = pizza;
+                _cookStates[i].isCooking = true;
+                std::cerr << "Assigned " << pizza.toString() << " to cook "
+                          << i << " (cooking)" << std::endl;
+            } else {
+                _cookStates[i].queuedPizza = pizza;
+                _cookStates[i].hasQueued = true;
+                std::cerr << "Assigned " << pizza.toString() << " to cook "
+                          << i << " (queued)" << std::endl;
+            }
+            return true;
+        }
+    }
+
+    std::cerr << "All cooks in kitchen " << _kitchenName << " are full"
+              << std::endl;
+    return false;
+}
+
+void Kitchen::cookWorker(unsigned int cookId) {
+    std::cerr << "Cook " << cookId << " in kitchen " << _kitchenName
+              << " started" << std::endl;
+
+    while (_running && _kitchenOpen) {
+        plazza::Pizza pizzaToCook(
+            plazza::Pizza::NONE_TYPE, plazza::Pizza::NONE_SIZE);
+        bool hasPizza = false;
+
+        {
+            std::lock_guard<std::mutex> lock(*_cookMutexes[cookId]);
+            if (_cookStates[cookId].isCooking) {
+                pizzaToCook = _cookStates[cookId].currentPizza;
+                hasPizza = true;
+            }
+        }
+
+        if (hasPizza) {
+            if (decrementIngredients(pizzaToCook)) {
+                unsigned int cookTime =
+                    pizzaToCook.getPizzaTime() * _cookingMultiplier;
+                std::cerr << "Cook " << cookId << " cooking "
+                          << pizzaToCook.toString() << " for " << cookTime
+                          << "ms" << std::endl;
+
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(cookTime));
+
+                std::cerr << "Cook " << cookId << " finished cooking "
+                          << pizzaToCook.toString() << std::endl;
+
+                {
+                    std::lock_guard<std::mutex> lock(*_cookMutexes[cookId]);
+                    if (_cookStates[cookId].hasQueued) {
+                        _cookStates[cookId].currentPizza =
+                            _cookStates[cookId].queuedPizza;
+                        _cookStates[cookId].queuedPizza =
+                            plazza::Pizza(plazza::Pizza::NONE_TYPE,
+                                plazza::Pizza::NONE_SIZE);
+                        _cookStates[cookId].hasQueued = false;
+                        // isCooking remains true
+                    } else {
+                        _cookStates[cookId].isCooking = false;
+                        _cookStates[cookId].currentPizza =
+                            plazza::Pizza(plazza::Pizza::NONE_TYPE,
+                                plazza::Pizza::NONE_SIZE);
+                    }
+                }
+            } else {
+                std::cerr << "Cook " << cookId
+                          << " waiting for ingredients for "
+                          << pizzaToCook.toString() << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+
+    std::cerr << "Cook " << cookId << " in kitchen " << _kitchenName
+              << " finished" << std::endl;
 }
 
 bool Kitchen::decrementIngredients(const plazza::Pizza &pizza) {
-    _ingredientsMutex.lock();
-    if (!this->_kitchenOpen) {
-        _ingredientsMutex.unlock();
-        return false;  // Kitchen is closed, cannot decrement ingredients
-    }
+    std::lock_guard<std::mutex> lock(_ingredientsMutex);
+
     switch (pizza.getType()) {
         case plazza::Pizza::Margarita:
-            if (this->_ingredients.dough < 1 ||
-                this->_ingredients.tomato < 1 ||
-                this->_ingredients.gruyere < 1) {
-                _ingredientsMutex.unlock();
-                return false;  // Not enough ingredients
+            if (_ingredients.dough < 1 || _ingredients.tomato < 1 ||
+                _ingredients.gruyere < 1) {
+                return false;
             }
-            this->_ingredients.dough -= 1;
-            this->_ingredients.tomato -= 1;
-            this->_ingredients.gruyere -= 1;
+            _ingredients.dough -= 1;
+            _ingredients.tomato -= 1;
+            _ingredients.gruyere -= 1;
             break;
+
         case plazza::Pizza::Regina:
-            if (this->_ingredients.dough < 1 ||
-                this->_ingredients.tomato < 1 ||
-                this->_ingredients.gruyere < 1 || this->_ingredients.ham < 1 ||
-                this->_ingredients.mushrooms < 1) {
-                _ingredientsMutex.unlock();
-                return false;  // Not enough ingredients
+            if (_ingredients.dough < 1 || _ingredients.tomato < 1 ||
+                _ingredients.gruyere < 1 || _ingredients.ham < 1 ||
+                _ingredients.mushrooms < 1) {
+                return false;
             }
-            this->_ingredients.dough -= 1;
-            this->_ingredients.tomato -= 1;
-            this->_ingredients.gruyere -= 1;
-            this->_ingredients.ham -= 1;
-            this->_ingredients.mushrooms -= 1;
+            _ingredients.dough -= 1;
+            _ingredients.tomato -= 1;
+            _ingredients.gruyere -= 1;
+            _ingredients.ham -= 1;
+            _ingredients.mushrooms -= 1;
             break;
+
         case plazza::Pizza::Americana:
-            if (this->_ingredients.dough < 1 ||
-                this->_ingredients.tomato < 1 ||
-                this->_ingredients.gruyere < 1 ||
-                this->_ingredients.steak < 1) {
-                _ingredientsMutex.unlock();
-                return false;  // Not enough ingredients
+            if (_ingredients.dough < 1 || _ingredients.tomato < 1 ||
+                _ingredients.gruyere < 1 || _ingredients.steak < 1) {
+                return false;
             }
-            this->_ingredients.dough -= 1;
-            this->_ingredients.tomato -= 1;
-            this->_ingredients.gruyere -= 1;
-            this->_ingredients.steak -= 1;
+            _ingredients.dough -= 1;
+            _ingredients.tomato -= 1;
+            _ingredients.gruyere -= 1;
+            _ingredients.steak -= 1;
             break;
+
         case plazza::Pizza::Fantasia:
-            if (this->_ingredients.dough < 1 ||
-                this->_ingredients.tomato < 1 ||
-                this->_ingredients.gruyere < 1 ||
-                this->_ingredients.eggplant < 1 ||
-                this->_ingredients.goatCheese < 1) {
-                _ingredientsMutex.unlock();
-                return false;  // Not enough ingredients
+            if (_ingredients.dough < 1 || _ingredients.tomato < 1 ||
+                _ingredients.eggplant < 1 || _ingredients.goatCheese < 1 ||
+                _ingredients.chiefLove < 1) {
+                return false;
             }
-            this->_ingredients.dough -= 1;
-            this->_ingredients.tomato -= 1;
-            this->_ingredients.gruyere -= 1;
-            this->_ingredients.eggplant -= 1;
-            this->_ingredients.goatCheese -= 1;
-            this->_ingredients.chiefLove -= 1;
+            _ingredients.dough -= 1;
+            _ingredients.tomato -= 1;
+            _ingredients.eggplant -= 1;
+            _ingredients.goatCheese -= 1;
+            _ingredients.chiefLove -= 1;
             break;
+
         default:
-            _ingredientsMutex.unlock();
-            return false;  // Invalid pizza type
-    }
-    _ingredientsMutex.unlock();
-    return true;  // Ingredients decremented successfully
-}
-
-bool Kitchen::isOpen() const {
-    return this->_kitchenOpen;
-}
-
-// implement the thread pool for cooks
-void Kitchen::cook() {
-    this->_lastCookTime = std::time(nullptr);
-    this->_lastRestockTime = std::time(nullptr);
-    std::cout << "Create the " << this->_cookNb
-              << " cooks for kitchen: " << this->_kitchenName << std::endl;
-
-    for (unsigned int i = 0; i < this->_cookNb; ++i) {
-        plazza::Cook cook(std::ref(*this));
-        this->_cooks.emplace_back(cookThread, std::ref(cook));
-        std::cout << "Cook " << i + 1
-                  << " created for kitchen: " << this->_kitchenName
-                  << std::endl;
+            return false;
     }
 
-    while (1) {
-        std::clock_t currentTime = std::clock();
-        this->_timePassed = currentTime;
+    return true;
+}
 
-        if (std::difftime(std::time(nullptr), this->_lastRestockTime) >=
-            this->_restockTime / 1000.0f) {
-            this->_lastRestockTime = std::time(nullptr);
-            this->_ingredients.restock();
-            std::cout << "Restocking ingredients in kitchen: "
-                      << this->_kitchenName << std::endl;
+unsigned int Kitchen::getCurrentLoad() const {
+    unsigned int totalLoad = 0;
+
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        std::lock_guard<std::mutex> lock(*_cookMutexes[i]);
+        totalLoad += _cookStates[i].getCurrentLoad();
+    }
+
+    return totalLoad;
+}
+
+KitchenStatus Kitchen::getCurrentStatus() const {
+    KitchenStatus status;
+
+    status.busyCooks = 0;
+    status.queueSize = 0;
+
+    for (unsigned int i = 0; i < _cookNb; ++i) {
+        std::lock_guard<std::mutex> lock(*_cookMutexes[i]);
+        if (_cookStates[i].isCooking) {
+            status.busyCooks++;
         }
-        if (std::difftime(std::time(nullptr), this->_lastCookTime) >= 5) {
-            std::cout << "Closing kitchen: " << this->_kitchenName
+        status.queueSize += _cookStates[i].getCurrentLoad();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(_ingredientsMutex);
+        status.ingredients = _ingredients;
+    }
+
+    return status;
+}
+
+void Kitchen::restockWorker() {
+    while (_running && _kitchenOpen) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(_restockTime));
+
+        if (_running && _kitchenOpen) {
+            std::lock_guard<std::mutex> lock(_ingredientsMutex);
+            _ingredients.restock();
+            std::cerr << "Kitchen " << _kitchenName << " restocked ingredients"
                       << std::endl;
-            break;
         }
-        // if status received, print status
-        // if order received, process order and print OK or KO
-        // if pizza cooked, print pizza type and size and finished
-        // thread pool
     }
 }
+
 }  // namespace plazza
