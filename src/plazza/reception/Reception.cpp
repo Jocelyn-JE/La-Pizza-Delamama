@@ -512,6 +512,9 @@ unsigned int plazza::Reception::findAvailableKitchen() {
 
     std::vector<unsigned int> failedKitchens;
 
+    std::cerr << "=== KITCHEN AVAILABILITY CHECK ===" << std::endl;
+    std::cerr << "Total kitchens: " << kitchensCopy.size() << std::endl;
+
     for (const auto &pair : kitchensCopy) {
         unsigned int kitchenId = pair.first;
         NamedPipe *receptionToKitchen = pair.second.first;
@@ -542,7 +545,7 @@ unsigned int plazza::Reception::findAvailableKitchen() {
                           << " current load: " << load << "/" << maxCapacity
                           << std::endl;
 
-                if (load < maxCapacity - 1) {
+                if (load < maxCapacity) {
                     foundAvailable = true;
                     if (load < minLoad) {
                         minLoad = load;
@@ -582,7 +585,11 @@ unsigned int plazza::Reception::findAvailableKitchen() {
         std::cerr << "Selected kitchen " << bestKitchenId << " with load "
                   << minLoad << "/" << (2 * _cookNb) << std::endl;
         return bestKitchenId;
+    } else {
+        std::cerr << "No available kitchens found, creating new one"
+                  << std::endl;
     }
+    std::cerr << "=== END KITCHEN CHECK ===" << std::endl;
 
     std::cerr << "All kitchens are full/unresponsive, creating a new one..."
               << std::endl;

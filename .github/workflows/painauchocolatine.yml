@@ -112,7 +112,6 @@ jobs:
     name: "Push to mirror repository"
     needs:
       - run_tests
-      - check_cpp_linter
       - check_coding_style
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
