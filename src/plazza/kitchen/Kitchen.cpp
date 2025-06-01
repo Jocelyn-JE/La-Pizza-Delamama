@@ -241,7 +241,7 @@ KitchenStatus Kitchen::getCurrentStatus() const {
 
 void Kitchen::restockWorker() {
     while (_running && _kitchenOpen) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(_restockTime));
+        std::this_thread::sleep_for(std::chrono::seconds(_restockTime));
 
         if (_running && _kitchenOpen) {
             std::lock_guard<std::mutex> lock(_ingredientsMutex);

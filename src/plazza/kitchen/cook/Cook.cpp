@@ -55,8 +55,8 @@ void plazza::Cook::cook() {
 
 void Cook::dump() {
     if (working) {
-        std::cout << "Cook is currently working on pizza: " << pizza.getType()
-                  << " of size " << pizza.getSize() << std::endl;
+        std::cout << "Cook is currently working on pizza: " << pizza.getTypeString()
+                  << " of size " << pizza.getSizeString() << std::endl;
     } else {
         std::cout << "Cook is waiting." << std::endl;
     }
